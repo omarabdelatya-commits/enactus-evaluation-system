@@ -5,23 +5,223 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enactus Qena Evaluation System</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
-        .card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        h2 { text-align: center; color: #fbbf24; margin-bottom: 5px; }
-        p.sub { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 13px; }
-        button { width: 100%; padding: 12px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        button:hover { background: #f59e0b; }
+        :root {
+            --bg-main: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --accent: #fbbf24;
+            --accent-hover: #f59e0b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-main); color: var(--text-main); margin: 0; padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: center; box-sizing: border-box; }
+        .container { width: 100%; max-width: 600px; }
+        .card { background: var(--card-bg); padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        h2 { text-align: center; color: var(--accent); margin-bottom: 8px; font-size: 24px; }
+        p.sub { text-align: center; color: var(--text-sub); font-size: 14px; margin-bottom: 25px; }
+        label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: #fff; box-sizing: border-box; font-size: 14px; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
+        button { width: 100%; padding: 14px; background: var(--accent); color: var(--bg-main); font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; transition: background 0.2s; }
+        button:hover { background: var(--accent-hover); }
+        .hidden { display: none !important; }
+        .flex-row { display: flex; gap: 10px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .tier-best { background: #065f46; color: #34d399; }
+        .tier-good { background: #1e40af; color: #60a5fa; }
+        .tier-warning { background: #7f1d1d; color: #f87171; }
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .nav-header h3 { margin: 0; color: var(--accent); }
+        .btn-logout { background: var(--danger); color: white; width: auto; padding: 8px 16px; font-size: 13px; }
+        .btn-logout:hover { background: #dc2626; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { color: var(--accent); }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Enactus Qena</h2>
-        <p class="sub">Evaluation System Online</p>
-        <label>Enter Your Name:</label>
-        <input type="text" id="nameInput" placeholder="Your Name">
-        <button onclick="alert('System Works Successfully, Omar!')">Test System</button>
+
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="card">
+            <h2>Enactus Qena</h2>
+            <p class="sub">Member Performance Evaluation System</p>
+            
+            <label>Select Role:</label>
+            <select id="roleSelect" onchange="toggleRoleFields()">
+                <option value="leader">HR Leader / Committee Head</option>
+                <option value="admin">Board Admin</option>
+            </select>
+
+            <label>Access Password:</label>
+            <input type="password" id="passInput" placeholder="Enter security password">
+
+            <button onclick="handleLogin()">Login to System</button>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboardScreen" class="card hidden">
+            <div class="nav-header">
+                <h3 id="dashTitle">Evaluation Dashboard</h3>
+                <button class="btn-logout" onclick="handleLogout()">Logout</button>
+            </div>
+
+            <div id="leaderView">
+                <p style="color: var(--text-sub); font-size: 13px; margin-top: 0;">Submit committee member evaluations and review metrics.</p>
+                
+                <label>Member Name:</label>
+                <input type="text" id="memberName" placeholder="e.g. Ahmed Mohamed">
+
+                <label>Committee:</label>
+                <select id="memberCommittee">
+                    <option value="Project Management">Project Management</option>
+                    <option value="HR">Human Resources</option>
+                    <option value="Media">Media & Marketing</option>
+                    <option value="FR">Fundraising</option>
+                </select>
+
+                <div class="flex-row">
+                    <div style="flex:1">
+                        <label>Task Completion (0-40):</label>
+                        <input type="number" id="scoreTasks" min="0" max="40" placeholder="0-40">
+                    </div>
+                    <div style="flex:1">
+                        <label>Commitment (0-30):</label>
+                        <input type="number" id="scoreCommitment" min="0" max="30" placeholder="0-30">
+                    </div>
+                    <div style="flex:1">
+                        <label>Teamwork (0-30):</label>
+                        <input type="number" id="scoreTeamwork" min="0" max="30" placeholder="0-30">
+                    </div>
+                </div>
+
+                <label>Feedback & Notes:</label>
+                <textarea id="memberNotes" rows="2" placeholder="Optional notes..."></textarea>
+
+                <button onclick="submitEvaluation()">Save & Submit Evaluation</button>
+            </div>
+
+            <div id="adminView" class="hidden">
+                <p style="color: var(--text-sub); font-size: 13px;">Board Admin Control Panel - All Submissions:</p>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Committee</th>
+                                <th>Total</th>
+                                <th>Tier</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evalTableBody">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        function toggleRoleFields() {
+            // Future extension if needed
+        }
+
+        function handleLogin() {
+            const role = document.getElementById('roleSelect').value;
+            const pass = document.getElementById('passInput').value;
+
+            if(role === 'admin' && pass !== 'admin2026') {
+                alert('Incorrect Admin Password! (Use: admin2026)');
+                return;
+            }
+
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+
+            if(role === 'admin') {
+                document.getElementById('dashTitle').innerText = 'Board Admin Panel';
+                document.getElementById('leaderView').classList.add('hidden');
+                document.getElementById('adminView').classList.remove('hidden');
+                loadEvaluations();
+            } else {
+                document.getElementById('dashTitle').innerText = 'HR Leader Evaluation Portal';
+                document.getElementById('adminView').classList.add('hidden');
+                document.getElementById('leaderView').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('passInput').value = '';
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function submitEvaluation() {
+            const name = document.getElementById('memberName').value.trim();
+            const committee = document.getElementById('memberCommittee').value;
+            const tasks = parseInt(document.getElementById('scoreTasks').value) || 0;
+            const commitment = parseInt(document.getElementById('scoreCommitment').value) || 0;
+            const teamwork = parseInt(document.getElementById('scoreTeamwork').value) || 0;
+            const notes = document.getElementById('memberNotes').value.trim();
+
+            if(!name) {
+                alert('Please enter member name.');
+                return;
+            }
+
+            const total = tasks + commitment + teamwork;
+            let tier = 'Warning';
+            let tierClass = 'tier-warning';
+            if(total >= 85) { tier = 'Best'; tierClass = 'tier-best'; }
+            else if(total >= 60) { tier = 'Good'; tierClass = 'tier-good'; }
+
+            const evaluation = { name, committee, total, tier, tierClass, notes, date: new Date().toLocaleDateString() };
+
+            let evaluations = JSON.parse(localStorage.getItem('enactus_evals') || '[]');
+            evaluations.push(evaluation);
+            localStorage.setItem('enactus_evals', JSON.stringify(evaluations));
+
+            alert('Evaluation saved successfully!');
+            document.getElementById('memberName').value = '';
+            document.getElementById('scoreTasks').value = '';
+            document.getElementById('scoreCommitment').value = '';
+            document.getElementById('scoreTeamwork').value = '';
+            document.getElementById('memberNotes').value = '';
+        }
+
+        function loadEvaluations() {
+            const tbody = document.getElementById('evalTableBody');
+            tbody.innerHTML = '';
+            let evaluations = JSON.parse(localStorage.getItem('enactus_evals') || '[]');
+
+            if(evaluations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-sub);">No evaluations found yet.</td></tr>';
+                return;
+            }
+
+            evaluations.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.committee}</td>
+                    <td><b>${item.total}/100</b></td>
+                    <td><span class="badge ${item.tierClass}">${item.tier}</span></td>
+                    <td><button onclick="deleteEval(${index})" style="padding:4px 8px; background:#ef4444; color:#fff; font-size:11px; width:auto;">Delete</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteEval(index) {
+            let evaluations = JSON.parse(localStorage.getItem('enactus_evals') || '[]');
+            evaluations.splice(index, 1);
+            localStorage.setItem('enactus_evals', JSON.stringify(evaluations));
+            loadEvaluations();
+        }
+    </script>
 </body>
 </html>
