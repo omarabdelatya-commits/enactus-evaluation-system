@@ -2,75 +2,121 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enactus Qena Evaluation System</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 14px; }
-        button { background: #059669; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
-        button:hover { background: #047857; }
-        h2 { text-align: center; color: #34d399; margin-top: 0; }
-        label { font-size: 12px; color: #94a3b8; font-weight: bold; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="box" id="app">
-        <h2>Enactus Qena</h2>
-        <p style="text-align: center; font-size: 12px; color: #64748b; margin-bottom: 20px;">System Login</p>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-        <label>Select Role:</label>
-        <select id="role" onchange="toggleRole()">
-            <option value="leader">HR Leader</option>
-            <option value="board">Board Admin</option>
-        </select>
-
-        <div id="leaderDiv">
-            <label>Select Committee:</label>
-            <select id="comm">
-                <option value="PM">PM</option>
-                <option value="PR">PR</option>
-                <option value="HR">HR</option>
-                <option value="Media">Media</option>
-            </select>
-
-            <label>Leader Name:</label>
-            <input type="text" id="leaderName" placeholder="Enter your name">
-        </div>
-
-        <label>Password:</label>
-        <input type="password" id="pass" placeholder="Enter password">
-
-        <button onclick="login()">Sign In</button>
+    <div id="app" class="max-w-xl w-full bg-slate-800 rounded-2xl shadow-2xl p-6 border border-slate-700">
+        <!-- Dynamic Interface -->
     </div>
 
     <script>
-        const BOARD_PASSWORD = "board123";
-
-        function toggleRole() {
-            const role = document.getElementById('role').value;
-            document.getElementById('leaderDiv').style.display = role === 'board' ? 'none' : 'block';
-        }
-
-        function login() {
-            const role = document.getElementById('role').value;
-            const pass = document.getElementById('pass').value.trim();
-
-            if (role === 'board') {
-                if (pass === BOARD_PASSWORD) {
-                    alert('Board Admin Logged In Successfully!');
-                    // هنا هننقل لوحة التحكم كاملة بمجرد ما تدخل
-                } else {
-                    alert('Wrong Board Password! Please use: board123');
-                }
-            } else {
-                const name = document.getElementById('leaderName').value.trim();
-                if (!name) {
-                    alert('Please enter your leader name.');
-                    return;
-                }
-                alert(`Welcome ${name}! Logged in successfully.`);
+        // Database & State
+        let db = JSON.parse(localStorage.getItem('enactus_master_v1')) || {
+            leaders: [
+                { id: "l1", name: "Omar", committee: "PM", pass: "123" }
+            ],
+            members: [],
+            evaluations: [],
+            boardPass: "board123",
+            personalCriteria: [
+                { name: "Commitment & Attendance", max: 5 },
+                { name: "Task Responsibility", max: 5 },
+                { name: "Teamwork & Cooperation", max: 5 },
+                { name: "Communication", max: 5 }
+            ],
+            techCriteria: {
+                PM: [{ name: "Problem Solving", max: 30 }, { name: "Project Planning", max: 30 }],
+                PR: [{ name: "Negotiation", max: 30 }, { name: "Sponsorship", max: 30 }],
+                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }],
+                Media: [{ name: "Design Quality", max: 30 }, { name: "Content Creation", max: 30 }]
             }
+        };
+
+        function saveDB() {
+            localStorage.setItem('enactus_master_v1', JSON.stringify(db));
         }
-    </script>
-</body>
-</html>
+
+        let currentView = 'login'; // login, dashboard, eval
+        let loginRole = 'leader'; // leader, board
+        let currentUser = null;
+        let activeMember = null;
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (currentView === 'login') {
+                app.innerHTML = `
+                    <div class="text-center mb-6">
+                        <h1 class="text-2xl font-extrabold text-emerald-400">Enactus Qena</h1>
+                        <p class="text-xs text-slate-400">Evaluation & Management System</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 bg-slate-900 p-1 rounded-xl mb-6 text-xs font-bold border border-slate-700">
+                        <button onclick="setLoginRole('leader')" class="py-2.5 rounded-lg transition ${loginRole === 'leader' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400'}">HR Leader</button>
+                        <button onclick="setLoginRole('board')" class="py-2.5 rounded-lg transition ${loginRole === 'board' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400'}">Board Admin</button>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        ${loginRole === 'leader' ? `
+                            <div>
+                                <label class="block text-slate-300 font-bold mb-1">Select Committee:</label>
+                                <select id="commSelect" onchange="updateLeaderDropdown()" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium">
+                                    ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-300 font-bold mb-1">Select HR Leader Name:</label>
+                                <select id="leaderSelect" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium">
+                                    <!-- Dynamic -->
+                                </select>
+                            </div>
+                        ` : `
+                            <div>
+                                <label class="block text-slate-300 font-bold mb-1">Board Administrator</label>
+                                <input type="text" disabled value="Enactus Board Admin" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-slate-400" />
+                            </div>
+                        `}
+
+                        <div>
+                            <label class="block text-slate-300 font-bold mb-1">Password:</label>
+                            <input type="password" id="passInput" placeholder="${loginRole === 'board' ? 'Enter: board123' : 'Enter: 123'}" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white" />
+                        </div>
+
+                        <button onclick="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3.5 rounded-xl shadow text-sm transition mt-2">Sign In</button>
+                    </div>
+                `;
+                if (loginRole === 'leader') updateLeaderDropdown();
+            } 
+            else if (currentView === 'dashboard') {
+                const members = currentUser.role === 'hr' ? db.members.filter(m => m.leaderId === currentUser.id) : db.members;
+
+                app.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-4 mb-6">
+                        <div>
+                            <h2 class="font-bold text-emerald-400 text-base">${currentUser.name}</h2>
+                            <p class="text-xs text-slate-400">${currentUser.role === 'hr' ? 'Committee: ' + currentUser.committee : 'Board Administration'}</p>
+                        </div>
+                        <button onclick="logout()" class="bg-red-900/50 text-red-300 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-900">Logout</button>
+                    </div>
+
+                    ${currentUser.role === 'hr' ? `
+                        <div class="space-y-4 text-xs">
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                                <h3 class="font-bold text-emerald-400 text-sm">👥 My Group Members (${members.length})</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" id="newMemName" placeholder="Enter Member Name" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                                    <button onclick="addMember()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 font-bold rounded-lg text-white">Add</button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 max-h-60 overflow-y-auto">
+                                ${members.length === 0 ? '<p class="text-center text-slate-500 py-6">No members added yet.</p>' :
+                                    members.map(m => `
+                                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                                            <span class="font-bold text-white text-sm">${m.name}</span>
+                                            <div class="flex gap-2">
+                                                <button onclick="openEval('${m.id}')" class="bg-emerald-600/50 text-emerald-300 px-3 py-1 rounded font-bold hover:bg-emerald-600">Evaluate & SWOT</button>
+                                                <button onclick="deleteMember('${m.id}')" class="bg-red-900/
