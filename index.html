@@ -14,7 +14,7 @@
 
     <script>
         // Database Initialization
-        let db = JSON.parse(localStorage.getItem('enactus_final_pro_v1')) || {
+        let db = JSON.parse(localStorage.getItem('enactus_final_pro_v2')) || {
             board: { name: "Board Admin", pass: "board123" },
             leaders: [],
             members: [],
@@ -36,13 +36,22 @@
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_final_pro_v1', JSON.stringify(db));
+            localStorage.setItem('enactus_final_pro_v2', JSON.stringify(db));
         }
 
         let currentView = 'login';
         let loginRole = 'leader';
         let currentUser = null;
         let activeMember = null;
+
+        // Helper function to calculate tier based on total score
+        function getTier(score) {
+            if (score < 55) return { name: "Warning", color: "bg-red-950 text-red-400 border-red-800", emoji: "⚠️" };
+            if (score < 65) return { name: "Bronze", color: "bg-amber-950 text-amber-600 border-amber-800", emoji: "🥉" };
+            if (score < 85) return { name: "Silver", color: "bg-slate-700 text-slate-300 border-slate-500", emoji: "🥈" };
+            if (score < 95) return { name: "Gold", color: "bg-yellow-950 text-yellow-400 border-yellow-700", emoji: "🥇" };
+            return { name: "Best", color: "bg-emerald-950 text-emerald-400 border-emerald-600", emoji: "💎" };
+        }
 
         function render() {
             const app = document.getElementById('app');
@@ -115,12 +124,13 @@
                             <div class="space-y-2 max-h-60 overflow-y-auto">
                                 ${members.length === 0 ? '<p class="text-center text-slate-500 py-6">No members added yet.</p>' :
                                     members.map(m => {
-                                        const hasEval = db.evaluations.some(e => e.memberId === m.id);
+                                        const ev = db.evaluations.find(e => e.memberId === m.id);
+                                        const tier = ev ? getTier(ev.totalScore) : null;
                                         return `
                                             <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
                                                 <div>
                                                     <span class="font-bold text-white text-sm">${m.name}</span>
-                                                    <span class="ml-2 text-[10px] px-2 py-0.5 rounded ${hasEval ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${hasEval ? 'Evaluated' : 'Not Evaluated'}</span>
+                                                    ${ev ? `<span class="ml-2 text-[10px] px-2 py-0.5 rounded border ${tier.color}">${tier.emoji} ${tier.name} (${ev.totalScore})</span>` : '<span class="ml-2 text-[10px] px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800">Pending</span>'}
                                                 </div>
                                                 <div class="flex gap-2">
                                                     <button onclick="openEval('${m.id}')" class="bg-amber-500/30 text-amber-300 px-3 py-1 rounded font-bold hover:bg-amber-500 hover:text-slate-950 transition">Evaluate & Notes</button>
@@ -141,11 +151,12 @@
                                         db.members.map(m => {
                                             const leader = db.leaders.find(l => l.id === m.leaderId) || { name: 'Unknown', committee: 'N/A' };
                                             const ev = db.evaluations.find(e => e.memberId === m.id);
+                                            const tier = ev ? getTier(ev.totalScore) : null;
                                             return `
                                                 <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-1">
                                                     <div class="flex justify-between items-center font-bold">
                                                         <span class="text-white">${m.name} <span class="text-amber-400">[${leader.committee}]</span></span>
-                                                        <span class="${ev ? 'text-emerald-400' : 'text-red-400'}">${ev ? 'Score: ' + ev.totalScore + ' Marks' : 'Not Evaluated'}</span>
+                                                        ${ev ? `<span class="px-2 py-0.5 rounded border ${tier.color}">${tier.emoji} ${tier.name} (${ev.totalScore} Marks)</span>` : '<span class="text-red-400">Not Evaluated</span>'}
                                                     </div>
                                                     <p class="text-slate-400 text-[11px]">Leader: ${leader.name}</p>
                                                     ${ev ? `
@@ -225,7 +236,7 @@
                                 return `
                                     <div class="bg-slate-900 p-3 rounded-lg space-y-2 border border-slate-800">
                                         <div class="flex justify-between items-center">
-                                            <span class="text-slate-300 font-bold">${c.name} (Max: ${c.max})</span>
+                                            <span class="text-slate-300 font-bold">${c.name} (Max:${c.max})</span>
                                             <input type="number" id="p_score_${i}" value="${score}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded text-amber-400 font-bold" />
                                         </div>
                                         <input type="text" id="p_note_${i}" value="${note}" placeholder="Add note (e.g., late, task delay...)" class="w-full p-2 bg-slate-800 text-slate-200 rounded border border-slate-700 text-[11px]" />
@@ -243,7 +254,7 @@
                                 return `
                                     <div class="bg-slate-900 p-3 rounded-lg space-y-2 border border-slate-800">
                                         <div class="flex justify-between items-center">
-                                            <span class="text-slate-300 font-bold">${c.name} (Max: ${c.max})</span>
+                                            <span class="text-slate-300 font-bold">${c.name} (Max:${c.max})</span>
                                             <input type="number" id="t_score_${i}" value="${score}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded text-amber-400 font-bold" />
                                         </div>
                                         <input type="text" id="t_note_${i}" value="${note}" placeholder="Add technical note..." class="w-full p-2 bg-slate-800 text-slate-200 rounded border border-slate-700 text-[11px]" />
@@ -304,126 +315,4 @@
                     currentUser = { role: 'hr', name: leader.name, committee: leader.committee, id: leader.id };
                     currentView = 'dashboard';
                     render();
-                } else {
-                    alert('Wrong Leader Password!');
                 }
-            }
-        }
-
-        function updateBoardSettings() {
-            const name = document.getElementById('updateBoardName').value.trim();
-            const pass = document.getElementById('updateBoardPass').value.trim();
-            if (!name) { alert('Board name cannot be empty'); return; }
-            db.board.name = name;
-            if (pass) db.board.pass = pass;
-            saveDB();
-            currentUser.name = name;
-            alert('Board settings updated successfully!');
-            render();
-        }
-
-        function addLeader() {
-            const name = document.getElementById('lName').value.trim();
-            const committee = document.getElementById('lComm').value;
-            const pass = document.getElementById('lPass').value.trim();
-            if (!name || !pass) { alert('Please fill all fields'); return; }
-            
-            db.leaders.push({ id: 'l_' + Date.now(), name, committee, pass });
-            saveDB();
-            alert(`HR Leader ${name} added successfully!`);
-            render();
-        }
-
-        function deleteLeader(id) {
-            if (confirm('Delete this leader?')) {
-                db.leaders = db.leaders.filter(l => l.id !== id);
-                saveDB();
-                render();
-            }
-        }
-
-        function resetLeaderPass(id) {
-            const newPass = document.getElementById(`reset_pass_${id}`).value.trim();
-            if (!newPass) { alert('Enter new password'); return; }
-            const leader = db.leaders.find(l => l.id === id);
-            if (leader) {
-                leader.pass = newPass;
-                saveDB();
-                alert('Password updated successfully!');
-                render();
-            }
-        }
-
-        function addMember() {
-            const name = document.getElementById('newMemName').value.trim();
-            if (!name) { alert('Enter member name'); return; }
-            db.members.push({ id: 'm_' + Date.now(), name, leaderId: currentUser.id });
-            saveDB();
-            render();
-        }
-
-        function deleteMember(id) {
-            if (confirm("Remove this member?")) {
-                db.members = db.members.filter(m => m.id !== id);
-                saveDB();
-                render();
-            }
-        }
-
-        function openEval(id) {
-            activeMember = db.members.find(m => m.id === id);
-            currentView = 'eval';
-            render();
-        }
-
-        function saveEvaluation() {
-            let total = 0;
-            let pScores = {}, pNotes = {};
-            db.personalCriteria.forEach((c, i) => {
-                const score = Number(document.getElementById(`p_score_${i}`).value || 0);
-                const note = document.getElementById(`p_note_${i}`).value.trim();
-                pScores[i] = score;
-                pNotes[i] = note;
-                total += score;
-            });
-
-            let tScores = {}, tNotes = {};
-            const techList = db.techCriteria[currentUser.committee] || [];
-            techList.forEach((c, i) => {
-                const score = Number(document.getElementById(`t_score_${i}`).value || 0);
-                const note = document.getElementById(`t_note_${i}`).value.trim();
-                tScores[i] = score;
-                tNotes[i] = note;
-                total += score;
-            });
-
-            const indNotes = document.getElementById('indNotes').value.trim();
-            const swot = {
-                s: document.getElementById('swotS').value.trim(),
-                w: document.getElementById('swotW').value.trim()
-            };
-
-            db.evaluations = db.evaluations.filter(e => e.memberId !== activeMember.id);
-            db.evaluations.push({
-                memberId: activeMember.id,
-                totalScore: total,
-                pScores, pNotes, tScores, tNotes,
-                indNotes, swot
-            });
-
-            saveDB();
-            alert(`Evaluation saved successfully!\nTotal Score: ${total} Marks`);
-            currentView = 'dashboard';
-            render();
-        }
-
-        function logout() {
-            currentUser = null;
-            currentView = 'login';
-            render();
-        }
-
-        render();
-    </script>
-</body>
-</html>
