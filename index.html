@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena - Evaluation System</title>
+    <title>Enactus Qena System</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -19,8 +19,7 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-main); color: var(--text-main); margin: 0; padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: center; box-sizing: border-box; }
         .container { width: 100%; max-width: 900px; }
         .card { background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid var(--border-color); margin-bottom: 20px; }
-        h2, h3, h4 { color: var(--accent); margin-top: 0; }
-        h2 { text-align: center; }
+        h2, h3, h4 { color: var(--accent); margin-top: 0; text-align: center; }
         p.sub { text-align: center; color: var(--text-sub); font-size: 14px; margin-bottom: 25px; }
         label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
         input, select, textarea { width: 100%; padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: #fff; box-sizing: border-box; font-size: 14px; }
@@ -32,26 +31,4 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { color: var(--accent); }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-        .tier-warning { background: #7f1d1d; color: #f87171; }
-        .tier-silver { background: #334155; color: #cbd5e1; }
-        .tier-bronze { background: #78350f; color: #fcd34d; }
-        .tier-gold { background: #713f12; color: #fde047; }
-        .tier-best { background: #065f46; color: #34d399; }
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-buttons button { background: #334155; color: #fff; flex: 1; }
-        .tab-buttons button.active { background: var(--accent); color: var(--bg-main); }
-        .crit-box { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border-color); }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        <!-- 1. Authentication / Registration -->
-        <div id="authScreen" class="card">
-            <h2 id="authTitle">Enactus Qena Portal</h2>
-            <p class="sub" id="authSubtitle">Member Evaluation & Control System</p>
-
-            <!-- Board Master Registration (Appears ONLY for primary owner) -->
-            <div id="registerBoardForm">
-                <p style="color: var(--accent); font-size: 13px; text-align: center; margin-bottom: 15px
+        .badge
