@@ -48,25 +48,25 @@
     <div class="container">
         <!-- Auth Screen -->
         <div id="authScreen" class="card">
-            <h2>Enactus Qena Portal 2026</h2>
-            <p class="sub">Evaluation & Committee Management System</p>
+            <h2>Enactus Qena Portal</h2>
+            <p class="sub">Evaluation System</p>
 
-            <!-- 1. Simplified Owner Registration (Name + Password only) -->
+            <!-- 1. Owner Setup (Username + Password Only) -->
             <div id="registerBoardForm">
                 <p style="color: var(--accent); font-size: 13px; text-align: center; margin-bottom: 15px;">
-                    Welcome Owner! Enter your Full Name and Password to activate the Master Admin account.
+                    Enter your Username and Password to activate the Master Admin account.
                 </p>
-                <label>Full Name:</label>
-                <input type="text" id="regBoardName" placeholder="e.g. Omar Abdel-Aati">
-                <label>Admin Password:</label>
-                <input type="password" id="regBoardPass" placeholder="Set your admin password">
+                <label>Username:</label>
+                <input type="text" id="regBoardUser" placeholder="Enter your username (e.g. omar)">
+                <label>Password:</label>
+                <input type="password" id="regBoardPass" placeholder="Enter your password">
                 <button type="button" onclick="registerMasterBoard()">Create Master Admin Account</button>
             </div>
 
             <!-- 2. Standard Login Form -->
             <div id="loginForm" class="hidden">
                 <label>Username:</label>
-                <input type="text" id="loginUser" placeholder="Enter username ('admin' for Master Board)">
+                <input type="text" id="loginUser" placeholder="Enter username">
                 <label>Password:</label>
                 <input type="password" id="loginPass" placeholder="Enter password">
                 <button type="button" onclick="handleLogin()">Login to Portal</button>
@@ -90,22 +90,20 @@
                 <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Account Security</button>
             </div>
 
-            <!-- Grant HR Access Tab -->
+            <!-- Grant HR Access Tab (Simple: Username + Password + Committee) -->
             <div id="adminSectionLeaders">
-                <h4 style="margin-top:0; text-align:left;">Grant HR Leader Access</h4>
-                <label>Leader Full Name:</label>
-                <input type="text" id="newLeaderName" placeholder="e.g. Mohamed Ali">
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Assigned Username:</label><input type="text" id="newLeaderUser" placeholder="Username"></div>
-                    <div style="flex:1;"><label>Assigned Password:</label><input type="password" id="newLeaderPass" placeholder="Password"></div>
-                </div>
+                <h4 style="margin-top:0; text-align:left;">Add HR Leader Account</h4>
+                <label>Leader Username:</label>
+                <input type="text" id="newLeaderUser" placeholder="Leader Username (e.g. mohamed)">
+                <label>Leader Password:</label>
+                <input type="password" id="newLeaderPass" placeholder="Set Leader Password">
                 <label>Assigned Committee / Group:</label>
                 <input type="text" id="newLeaderCommittee" placeholder="e.g. Project Management, HR, Media...">
-                <button type="button" onclick="addLeader()">Create HR Leader Account</button>
+                <button type="button" onclick="addLeader()">Create Leader Account</button>
 
                 <h4 style="margin-top:25px; text-align:left;">Active HR Leaders</h4>
                 <table>
-                    <thead><tr><th>Name</th><th>Username</th><th>Committee</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Username</th><th>Committee</th><th>Action</th></tr></thead>
                     <tbody id="leadersTableBody"></tbody>
                 </table>
             </div>
@@ -149,7 +147,7 @@
 
             <!-- Account Security Tab -->
             <div id="adminSectionSecurity" class="hidden">
-                <h4 style="margin-top:0; text-align:left;">Change Master Admin Password</h4>
+                <h4 style="margin-top:0; text-align:left;">Change Admin Password</h4>
                 <label>New Password:</label>
                 <input type="password" id="changeBoardPass" placeholder="Enter new password">
                 <button type="button" onclick="updateBoardPassword()">Update Password</button>
@@ -196,7 +194,7 @@
     </div>
 
     <script>
-        const KEY = 'enactus_en_v600';
+        const KEY = 'enactus_direct_v700';
 
         function loadData() {
             try {
@@ -231,28 +229,28 @@
         });
 
         function registerMasterBoard() {
-            const name = document.getElementById('regBoardName').value.trim();
+            const username = document.getElementById('regBoardUser').value.trim();
             const password = document.getElementById('regBoardPass').value.trim();
 
-            if(!name || !password) {
-                alert('Please enter your Full Name and Password.');
+            if(!username || !password) {
+                alert('Please enter a Username and Password.');
                 return;
             }
 
-            db.masterBoard = { name: name, username: "admin", password: password };
+            db.masterBoard = { username: username, password: password };
             localStorage.setItem(KEY, JSON.stringify(db));
-            alert('Master Admin Account Created Successfully!\nYour fixed login username is: admin');
+            alert('Master Admin Account Created Successfully!');
             
-            document.getElementById('registerBoardForm').classList.add('hidden');
-            document.getElementById('loginForm').classList.remove('hidden');
+            currentUser = { role: 'admin', name: db.masterBoard.username };
+            launchAdminDashboard();
         }
 
         function handleLogin() {
             const user = document.getElementById('loginUser').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
 
-            if(db.masterBoard && (user === db.masterBoard.username || user === "admin") && pass === db.masterBoard.password) {
-                currentUser = { role: 'admin', name: db.masterBoard.name };
+            if(db.masterBoard && user === db.masterBoard.username && pass === db.masterBoard.password) {
+                currentUser = { role: 'admin', name: db.masterBoard.username };
                 launchAdminDashboard();
                 return;
             }
@@ -279,7 +277,7 @@
         function launchAdminDashboard() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
-            document.getElementById('adminWelcomeTitle').innerText = `Board Admin: ${db.masterBoard.name}`;
+            document.getElementById('adminWelcomeTitle').innerText = `Board Admin: ${currentUser.name}`;
             renderLeadersTable();
             renderCriteriaTable();
             renderAdminEvalsTable();
@@ -314,24 +312,22 @@
         }
 
         function addLeader() {
-            const name = document.getElementById('newLeaderName').value.trim();
             const username = document.getElementById('newLeaderUser').value.trim();
             const password = document.getElementById('newLeaderPass').value.trim();
             const committee = document.getElementById('newLeaderCommittee').value.trim();
 
-            if(!name || !username || !password || !committee) {
+            if(!username || !password || !committee) {
                 alert('Please fill all fields.');
                 return;
             }
-            if(username === "admin" || db.leaders.some(l => l.username === username)) {
+            if(username === db.masterBoard.username || db.leaders.some(l => l.username === username)) {
                 alert('Username already in use!');
                 return;
             }
 
-            db.leaders.push({ name, username, password, committee });
+            db.leaders.push({ username, password, committee, name: username });
             localStorage.setItem(KEY, JSON.stringify(db));
 
-            document.getElementById('newLeaderName').value = '';
             document.getElementById('newLeaderUser').value = '';
             document.getElementById('newLeaderPass').value = '';
             document.getElementById('newLeaderCommittee').value = '';
@@ -343,11 +339,11 @@
             const tbody = document.getElementById('leadersTableBody');
             tbody.innerHTML = '';
             if(db.leaders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-sub);">No leaders added yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-sub);">No leaders added yet.</td></tr>';
                 return;
             }
             db.leaders.forEach((l, idx) => {
-                tbody.innerHTML += `<tr><td>${l.name}</td><td>${l.username}</td><td>${l.committee}</td><td><button type="button" onclick="deleteLeader(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td></tr>`;
+                tbody.innerHTML += `<tr><td>${l.username}</td><td>${l.committee}</td><td><button type="button" onclick="deleteLeader(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td></tr>`;
             });
         }
 
@@ -433,7 +429,7 @@
         function launchLeaderDashboard() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('leaderDashboard').classList.remove('hidden');
-            document.getElementById('leaderDashTitle').innerText = `${currentUser.name} (HR Leader)`;
+            document.getElementById('leaderDashTitle').innerText = `${currentUser.username} (HR Leader)`;
             document.getElementById('leaderSubInfo').innerText = `Committee: ${currentUser.committee}`;
             renderCommitteeMembersDropdown();
             renderLeaderCriteriaInputs();
@@ -447,7 +443,7 @@
             db.members.push({
                 name,
                 committee: currentUser.committee,
-                leaderName: currentUser.name
+                leaderName: currentUser.username
             });
             localStorage.setItem(KEY, JSON.stringify(db));
             document.getElementById('newMemberName').value = '';
@@ -458,7 +454,7 @@
         function renderCommitteeMembersDropdown() {
             const select = document.getElementById('selectCommitteeMember');
             select.innerHTML = '<option value="">-- Choose Member --</option>';
-            const myMembers = db.members.filter(m => m.leaderName === currentUser.name);
+            const myMembers = db.members.filter(m => m.leaderName === currentUser.username);
             myMembers.forEach(m => {
                 select.innerHTML += `<option value="${m.name}">${m.name}</option>`;
             });
@@ -511,7 +507,7 @@
             db.evaluations.push({
                 memberName,
                 committee: currentUser.committee,
-                leaderName: currentUser.name,
+                leaderName: currentUser.username,
                 totalScore,
                 tier,
                 tierClass,
@@ -534,7 +530,7 @@
         function renderLeaderEvalsTable() {
             const tbody = document.getElementById('leaderEvalsTableBody');
             tbody.innerHTML = '';
-            const myEvals = db.evaluations.filter(e => e.leaderName === currentUser.name);
+            const myEvals = db.evaluations.filter(e => e.leaderName === currentUser.username);
             if(myEvals.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-sub);">No evaluations recorded yet.</td></tr>';
                 return;
