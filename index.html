@@ -1,69 +1,162 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena Evaluation</title>
+    <title>نظام تقييم إنكتوس قنا</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        h2 { text-align: center; color: #fbbf24; margin-top: 0; }
-        label { display: block; margin-top: 15px; font-size: 13px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; margin-top: 20px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+        body { font-family: Tahoma, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        h2 { text-align: center; color: #fbbf24; margin-bottom: 5px; }
+        p.sub { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 13px; }
+        button { width: 100%; padding: 12px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s; }
         button:hover { background: #f59e0b; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid #334155; }
+        .tab-btn { flex: 1; padding: 10px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .tab-btn.active { background: #fbbf24; color: #0f172a; }
+        .btn-danger { background: #991b1b; color: #f87171; margin-top: 5px; }
+        .btn-danger:hover { background: #7f1d1d; }
+        .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: bold; display: inline-block; }
+        .b-warn { background: #451a03; color: #f87171; border: 1px solid #991b1b; }
+        .b-bronze { background: #451a03; color: #fb923c; border: 1px solid #c2410c; }
+        .b-silver { background: #334155; color: #e2e8f0; border: 1px solid #64748b; }
+        .b-gold { background: #422006; color: #facc15; border: 1px solid #ca8a04; }
+        .b-best { background: #064e3b; color: #34d399; border: 1px solid #059669; }
     </style>
 </head>
 <body>
 
-    <div class="box" id="app">
-        <h2>Enactus Qena</h2>
-        <label>اختر نوع الدخول:</label>
-        <select id="roleSelect" onchange="changeRole()">
-            <option value="board">مدير المجلس (Board Admin)</option>
-            <option value="leader">قائد HR (HR Leader)</option>
-        </select>
-
-        <div id="boardGroup">
-            <label>اسم البورد:</label>
-            <input type="text" id="bName" value="Board Admin">
-        </div>
-
-        <div id="leaderGroup" style="display:none;">
-            <label>اسم قائد الـ HR:</label>
-            <input type="text" id="lName" value="Leader Name">
-        </div>
-
-        <label>كلمة المرور:</label>
-        <input type="password" id="passInput" placeholder="••••••••">
-
-        <button onclick="login()">تسجيل الدخول</button>
-    </div>
+    <div class="card" id="app"></div>
 
     <script>
-        function changeRole() {
-            var role = document.getElementById('roleSelect').value;
-            if(role === 'board') {
-                document.getElementById('boardGroup').style.display = 'block';
-                document.getElementById('leaderGroup').style.display = 'none';
-            } else {
-                document.getElementById('boardGroup').style.display = 'none';
-                document.getElementById('leaderGroup').style.display = 'block';
+        let db = JSON.parse(localStorage.getItem('enactus_live_v1')) || {
+            board: { name: "Board Admin", pass: "board123" },
+            leaders: [],
+            members: [],
+            evaluations: [],
+            personalCriteria: [
+                { name: "الالتزام والحضور", max: 5 },
+                { name: "مسؤولية التمهيد والمهام", max: 5 },
+                { name: "العمل الجماعي والتعاون", max: 5 },
+                { name: "التواصل الفعال", max: 5 }
+            ],
+            techCriteria: {
+                PM: [{ name: "حل المشكلات", max: 30 }, { name: "التخطيط للمشروع", max: 30 }],
+                PR: [{ name: "التفاوض", max: 30 }, { name: "الرعاية والسبอนسر", max: 30 }],
+                HR: [{ name: "إدارة المقابلات (Recruitment)", max: 30 }, { name: "علاقات الأعضاء", max: 30 }],
+                Media: [{ name: "جودة التصميم", max: 30 }, { name: "ابتكار المحتوى", max: 30 }]
             }
+        };
+
+        function saveDB() {
+            localStorage.setItem('enactus_live_v1', JSON.stringify(db));
         }
 
-        function login() {
-            var pass = document.getElementById('passInput').value;
-            if(pass === "board123" || pass === "123") {
-                document.getElementById('app').innerHTML = `
-                    <h2 style="color: #34d399;">تم الدخول بنجاح!</h2>
-                    <p style="text-align: center; color: #cbd5e1;">أهلاً بك في نظام تقييم إنكتوس قنا.</p>
-                    <button onclick="location.reload()" style="background:#dc2626; color:#fff;">تسجيل الخروج</button>
-                `;
-            } else {
-                alert("كلمة المرور غير صحيحة! (جرب: board123)");
-            }
+        let loginRole = 'board';
+        let currentView = 'login';
+        let currentUser = null;
+        let activeMember = null;
+
+        function getTier(score) {
+            if (score < 55) return { name: "Warning (تحذير)", class: "b-warn", emoji: "⚠️" };
+            if (score < 65) return { name: "Bronze (برونزي)", class: "b-bronze", emoji: "🥉" };
+            if (score < 85) return { name: "Silver (فضي)", class: "b-silver", emoji: "🥈" };
+            if (score < 95) return { name: "Gold (ذهبي)", class: "b-gold", emoji: "🥇" };
+            return { name: "Best (الأفضل)", class: "b-best", emoji: "💎" };
         }
-    </script>
-</body>
-</html>
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (currentView === 'login') {
+                app.innerHTML = `
+                    <h2>Enactus Qena</h2>
+                    <p class="sub">نظام تقييم الأعضاء والليدرز</p>
+                    
+                    <div class="tabs">
+                        <button class="tab-btn ${loginRole === 'board' ? 'active' : ''}" onclick="setRole('board')">مدير المجلس (Board)</button>
+                        <button class="tab-btn ${loginRole === 'leader' ? 'active' : ''}" onclick="setRole('leader')">قائد HR</button>
+                    </div>
+
+                    ${loginRole === 'board' ? `
+                        <label>اسم مدير المجلس:</label>
+                        <input type="text" id="boardNameInput" value="${db.board.name}" placeholder="أدخل اسمك">
+                    ` : `
+                        <label>اختر اللجنة (Committee):</label>
+                        <select id="commSelect" onchange="updateLeaderDropdown()">
+                            ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                        </select>
+                        <label>اختر قائد الـ HR:</label>
+                        <select id="leaderSelect"></select>
+                    `}
+
+                    <label>كلمة المرور:</label>
+                    <input type="password" id="passInput" placeholder="••••••••">
+
+                    <button onclick="handleLogin()">تسجيل الدخول</button>
+                `;
+                if (loginRole === 'leader') updateLeaderDropdown();
+            } 
+            else if (currentView === 'dashboard') {
+                if (currentUser.role === 'board') {
+                    app.innerHTML = `
+                        <h2>مرحباً، ${currentUser.name}</h2>
+                        <p class="sub">لوحة تحكم المجلس (صلاحيات كاملة)</p>
+                        
+                        <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
+                            <label style="color:#fbbf24;">إعدادات وحماية البورد:</label>
+                            <input type="text" id="updBoardName" value="${db.board.name}" placeholder="اسم البورد">
+                            <input type="password" id="updBoardPass" placeholder="كلمة مرور جديدة (اختياري)">
+                            <button onclick="updateBoard()">حفظ التعديلات</button>
+                        </div>
+
+                        <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
+                            <label style="color:#fbbf24;">إضافة قائد HR جديد:</label>
+                            <input type="text" id="lName" placeholder="اسم الليدر بالكامل">
+                            <select id="lComm">
+                                ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                            <input type="password" id="lPass" placeholder="كلمة المرور">
+                            <button onclick="addLeader()">إضافة الليدر</button>
+                        </div>
+
+                        <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
+                            <label style="color:#fbbf24;">تقرير الأعضاء والتقييمات (${db.members.length}):</label>
+                            <div style="max-height:140px; overflow-y:auto;">
+                                ${db.members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">لا توجد أعضاء مسجلين بعد.</p>' :
+                                    db.members.map(m => {
+                                        const leader = db.leaders.find(l => l.id === m.leaderId) || { committee: 'N/A' };
+                                        const ev = db.evaluations.find(e => e.memberId === m.id);
+                                        const tier = ev ? getTier(ev.totalScore) : null;
+                                        return `
+                                            <div style="background:#1e293b; padding:8px; margin-bottom:6px; border-radius:6px; font-size:12px;">
+                                                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                                                    <span>${m.name} [${leader.committee}]</span>
+                                                    ${ev ? `<span class="badge ${tier.class}">${tier.emoji} ${tier.name} (${ev.totalScore})</span>` : '<span style="color:#f87171;">لم يتم التقييم</span>'}
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                            </div>
+                        </div>
+
+                        <button onclick="logout()" class="btn-danger">تسجيل الخروج</button>
+                    `;
+                } else {
+                    const members = db.members.filter(m => m.leaderId === currentUser.id);
+                    app.innerHTML = `
+                        <h2>مرحباً، ${currentUser.name}</h2>
+                        <p class="sub">لجنة: ${currentUser.committee}</p>
+
+                        <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
+                            <label style="color:#fbbf24;">إضافة عضو جديد لمجموعتك:</label>
+                            <input type="text" id="newMemName" placeholder="اسم العضو">
+                            <button onclick="addMember()">إضافة العضو</button>
+                        </div>
+
+                        <label style="color:#fbbf24;">أعضاء مجموعتي (${members.length}):</label>
+                        <div style="max-height:180px; overflow-y:auto; margin-bottom:12px;">
+                            ${members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">لم تقم بإضافة أعضاء بعد.</p>' :
+                                members.map(m =>
