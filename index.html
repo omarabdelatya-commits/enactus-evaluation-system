@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enactus Qena Evaluation System</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .card { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
         h2 { text-align: center; color: #fbbf24; margin-bottom: 5px; }
         p.sub { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
         label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
@@ -18,6 +18,9 @@
         .tab-btn.active { background: #fbbf24; color: #0f172a; }
         .btn-danger { background: #991b1b; color: #f87171; margin-top: 5px; }
         .btn-danger:hover { background: #7f1d1d; }
+        .btn-secondary { background: #334155; color: #fff; margin-bottom: 10px; }
+        .btn-secondary:hover { background: #475569; }
+        .score-box { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -28,22 +31,33 @@
 
     <script>
         // Database
-        let db = JSON.parse(localStorage.getItem('enactus_final_db')) || {
+        let db = JSON.parse(localStorage.getItem('enactus_final_db_v2')) || {
             board: { name: "Board Admin", pass: "board123" },
-            leaders: [
-                { id: "l1", name: "Ahmed HR", committee: "PM", pass: "123" }
-            ],
+            leaders: [],
             members: [],
-            evaluations: []
+            evaluations: [],
+            personalCriteria: [
+                { name: "Commitment & Attendance", max: 5 },
+                { name: "Task Responsibility", max: 5 },
+                { name: "Teamwork & Cooperation", max: 5 },
+                { name: "Communication", max: 5 }
+            ],
+            techCriteria: {
+                PM: [{ name: "Problem Solving", max: 30 }, { name: "Project Planning", max: 30 }],
+                PR: [{ name: "Negotiation", max: 30 }, { name: "Sponsorship", max: 30 }],
+                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }],
+                Media: [{ name: "Design Quality", max: 30 }, { name: "Content Creation", max: 30 }]
+            }
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_final_db', JSON.stringify(db));
+            localStorage.setItem('enactus_final_db_v2', JSON.stringify(db));
         }
 
         let currentRole = 'leader'; // leader or board
         let currentUser = null;
-        let currentView = 'login'; // login, dashboard
+        let currentView = 'login'; // login, dashboard, eval
+        let activeMember = null;
 
         function render() {
             const app = document.getElementById('app');
@@ -55,4 +69,51 @@
                     
                     <div class="tabs">
                         <button class="tab-btn ${currentRole === 'leader' ? 'active' : ''}" onclick="setRole('leader')">HR Leader</button>
-                        <button class="tab-btn ${currentRole === 'board'
+                        <button class="tab-btn ${currentRole === 'board' ? 'active' : ''}" onclick="setRole('board')">Board Admin</button>
+                    </div>
+
+                    ${currentRole === 'leader' ? `
+                        <label>Select Committee:</label>
+                        <select id="commSelect" onchange="updateLeaderDropdown()">
+                            ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                        </select>
+
+                        <label>Select HR Leader Name:</label>
+                        <select id="leaderSelect">
+                            <!-- Dynamic -->
+                        </select>
+                    ` : `
+                        <label>Board Admin Name:</label>
+                        <input type="text" id="boardNameInput" value="${db.board.name}" placeholder="Enter your name">
+                    `}
+
+                    <label>Password:</label>
+                    <input type="password" id="passInput" placeholder="••••••••">
+
+                    <button onclick="login()">Sign In</button>
+                `;
+                if (currentRole === 'leader') updateLeaderDropdown();
+            } 
+            else if (currentView === 'dashboard') {
+                if (currentUser.role === 'board') {
+                    app.innerHTML = `
+                        <h2>Welcome, ${currentUser.name}</h2>
+                        <p class="sub">Board Administration Dashboard</p>
+                        
+                        <div style="background:#0f172a; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #334155;">
+                            <label>Add New HR Leader:</label>
+                            <input type="text" id="newLName" placeholder="Leader Full Name">
+                            <select id="newLComm">
+                                ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                            <input type="password" id="newLPass" placeholder="Leader Password">
+                            <button onclick="addLeader()">Add Leader</button>
+                        </div>
+
+                        <h3>Existing HR Leaders (${db.leaders.length}):</h3>
+                        <div style="max-height: 180px; overflow-y: auto; margin-bottom: 15px;">
+                            ${db.leaders.length === 0 ? '<p style="color:#94a3b8; text-align:center;">No leaders added yet.</p>' :
+                                db.leaders.map(l => `
+                                    <div style="background:#0f172a; padding:8px; margin-bottom:6px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                                        <span style="font-size:13px;">${l.name} <b style="color:#fbbf24;">[${l.committee}]</b></span>
+                                        <button onclick="deleteLeader('${l.id}')" style="width:auto; padding:4px 8px; background:#991b1b; color:#fff; font-size:11px;">
