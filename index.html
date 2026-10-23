@@ -9,16 +9,16 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
     <div id="app" class="max-w-xl w-full bg-slate-800 rounded-2xl shadow-2xl p-6 border border-slate-700">
-        <!-- Dynamic App Container -->
+        <!-- App Container -->
     </div>
 
     <script>
-        // Database Initialization
-        let db = JSON.parse(localStorage.getItem('enactus_master_v9')) || {
+        // Stable Database Setup
+        let db = JSON.parse(localStorage.getItem('enactus_v10')) || {
             board: { name: "Board Admin", pass: "board123" },
             leaders: [],
             members: [],
-            evaluations: [], // Stores evaluations with criteria notes and SWOT
+            evaluations: [],
             personalCriteria: [
                 { name: "Commitment & Attendance", max: 5 },
                 { name: "Task Responsibility", max: 5 },
@@ -36,7 +36,7 @@
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_master_v9', JSON.stringify(db));
+            localStorage.setItem('enactus_v10', JSON.stringify(db));
         }
 
         let currentView = 'login';
@@ -133,11 +133,11 @@
                         </div>
                     ` : `
                         <div class="space-y-4 text-xs max-h-[75vh] overflow-y-auto pr-1">
-                            <!-- Board Full Access Overview -->
+                            <!-- Board Report -->
                             <div class="bg-slate-900 p-4 rounded-xl border border-amber-500/50 space-y-3">
                                 <h3 class="font-bold text-amber-400 text-sm">📊 Board Full Access: Members & Evaluations Report</h3>
                                 <div class="space-y-2 max-h-52 overflow-y-auto">
-                                    ${db.members.length === 0 ? '<p class="text-center text-slate-500 py-4">No members registered yet across committees.</p>' :
+                                    ${db.members.length === 0 ? '<p class="text-center text-slate-500 py-4">No members registered yet.</p>' :
                                         db.members.map(m => {
                                             const leader = db.leaders.find(l => l.id === m.leaderId) || { name: 'Unknown', committee: 'N/A' };
                                             const ev = db.evaluations.find(e => e.memberId === m.id);
@@ -147,12 +147,12 @@
                                                         <span class="text-white">${m.name} <span class="text-amber-400">[${leader.committee}]</span></span>
                                                         <span class="${ev ? 'text-emerald-400' : 'text-red-400'}">${ev ? 'Score: ' + ev.totalScore + ' Marks' : 'Not Evaluated'}</span>
                                                     </div>
-                                                    <p class="text-slate-400 text-[11px]">Evaluated by Leader: ${leader.name}</p>${ev ? `
+                                                    <p class="text-slate-400 text-[11px]">Leader: ${leader.name}</p>${ev ? `
                                                         <div class="bg-slate-900 p-2 rounded mt-1 space-y-1 text-[11px]">
-                                                            <p class="text-slate-300"><b>Individual Notes:</b> ${ev.indNotes || 'None'}</p>
+                                                            <p class="text-slate-300"><b>Notes:</b> ${ev.indNotes || 'None'}</p>
                                                             <div class="grid grid-cols-2 gap-1 text-[10px]">
-                                                                <span class="text-emerald-300"><b>Strengths:</b> ${ev.swot.s || '-'}</span>
-                                                                <span class="text-red-300"><b>Weaknesses:</b> ${ev.swot.w || '-'}</span>
+                                                                <span class="text-emerald-300"><b>S:</b> ${ev.swot.s || '-'}</span>
+                                                                <span class="text-red-300"><b>W:</b> ${ev.swot.w || '-'}</span>
                                                             </div>
                                                         </div>
                                                     ` : ''}
@@ -164,52 +164,25 @@
 
                             <!-- Board Settings -->
                             <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                                <h3 class="font-bold text-amber-400 text-sm">🛡️ Board Security & Profile Settings</h3>
-                                <div class="space-y-2">
-                                    <label class="block text-slate-300 font-bold">Board Name:</label>
-                                    <input type="text" id="updateBoardName" value="${db.board.name}" class="w-full p-2.5 bg-slate-800 text-white rounded border border-slate-700 font-bold" />
-                                    
-                                    <label class="block text-slate-300 font-bold">New Password:</label>
-                                    <input type="password" id="updateBoardPass" placeholder="Leave blank to keep current password" class="w-full p-2.5 bg-slate-800 text-white rounded border border-slate-700" />
-                                </div>
-                                <button onclick="updateBoardSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg">Save Board Settings</button>
+                                <h3 class="font-bold text-amber-400 text-sm">🛡️ Board Security Settings</h3>
+                                <input type="text" id="updateBoardName" value="${db.board.name}" placeholder="Board Name" class="w-full p-2.5 bg-slate-800 text-white rounded border border-slate-700 font-bold mb-2" />
+                                <input type="password" id="updateBoardPass" placeholder="New Password (Optional)" class="w-full p-2.5 bg-slate-800 text-white rounded border border-slate-700 mb-2" />
+                                <button onclick="updateBoardSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg">Save Settings</button>
                             </div>
 
-                            <!-- Add HR Leader Box -->
+                            <!-- Add HR Leader -->
                             <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
                                 <h3 class="font-bold text-amber-400 text-sm">➕ Add New HR Leader</h3>
                                 <input type="text" id="lName" placeholder="Leader Full Name" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold" />
                                 <select id="lComm" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold">
                                     ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
                                 </select>
-                                <input type="password" id="lPass" placeholder="Password for Leader" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold" />
+                                <input type="password" id="lPass" placeholder="Leader Password" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold" />
                                 <button onclick="addLeader()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg">Add Leader</button>
                             </div>
 
-                            <!-- Manage Criteria & Max Marks -->
-                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                                <h3 class="font-bold text-amber-400 text-sm">⚙️ Manage Personal Criteria & Max Marks</h3>
-                                <div class="space-y-2">
-                                    ${db.personalCriteria.map((c, i) => `
-                                        <div class="flex justify-between items-center bg-slate-800 p-2 rounded gap-2">
-                                            <input type="text" value="${c.name}" onchange="updatePCritName(${i}, this.value)" class="bg-slate-900 text-white p-1 rounded text-xs w-full border border-slate-700" />
-                                            <input type="number" value="${c.max}" onchange="updatePCritMax(${i}, this.value)" class="w-16 p-1 bg-slate-900 text-center font-bold text-amber-400 rounded border border-slate-700" />
-                                            <button onclick="deletePCrit(${i})" class="bg-red-900/50 text-red-300 px-2 py-1 rounded font-bold">X</button>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                <div class="flex gap-2 pt-2">
-                                    <input type="text" id="newPCName" placeholder="New Criterion Name" class="p-2 bg-slate-800 text-white rounded text-xs w-full border border-slate-700" />
-                                    <input type="number" id="newPCMax" placeholder="Max" value="5" class="p-2 bg-slate-800 text-white rounded text-xs w-16 border border-slate-700 text-center font-bold" />
-                                    <button onclick="addPCrit()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded text-xs font-bold">Add</button>
-                                </div>
-                            </div>
-
-                            <!-- Manage Leaders List -->
+                            <!-- Manage Leaders -->
                             <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2">
                                 <h3 class="font-bold text-amber-400 text-sm">👥 Manage HR Leaders (${db.leaders.length})</h3>
                                 <div class="space-y-2 max-h-48 overflow-y-auto">
                                     ${db.leaders.map((l) => `
-                                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-2">
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-bold text-white">${l.name} <span class="text-amber-400">[${l.committee}]</span></span>
