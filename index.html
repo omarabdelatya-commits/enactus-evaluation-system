@@ -47,64 +47,51 @@
 <body>
 
     <div class="container">
-        <!-- 1. Authentication / Registration -->
+        <!-- 1. Unified Login Screen Only (No Public Setup) -->
         <div id="authScreen" class="card">
-            <h2 id="authTitle">Enactus Qena Portal</h2>
-            <p class="sub" id="authSubtitle">Loading system configuration...</p>
+            <h2>Enactus Qena Portal</h2>
+            <p class="sub">Member Evaluation & Management System</p>
 
-            <!-- Board Admin Registration (First Time Only) -->
-            <div id="registerBoardForm" class="hidden">
-                <p style="color: var(--accent); font-size: 13px; text-align: center;">First time setup: Register Primary Board Account.</p>
-                <label>Board Admin Name:</label>
-                <input type="text" id="regBoardName" placeholder="e.g. Board Chair">
-                <label>Username:</label>
-                <input type="text" id="regBoardUser" placeholder="Choose admin username">
-                <label>Password:</label>
-                <input type="password" id="regBoardPass" placeholder="Choose admin password">
-                <button onclick="registerBoard()">Initialize System Board</button>
-            </div>
-
-            <!-- Login Form -->
-            <div id="loginForm" class="hidden">
+            <div id="loginForm">
                 <label>Username:</label>
                 <input type="text" id="loginUser" placeholder="Enter username">
                 <label>Password:</label>
                 <input type="password" id="loginPass" placeholder="Enter password">
-                <button onclick="handleLogin()">Login</button>
+                <button onclick="handleLogin()">Login to Portal</button>
             </div>
         </div>
 
-        <!-- 2. Board Admin Dashboard -->
+        <!-- 2. Master Board Admin Dashboard -->
         <div id="adminDashboard" class="card hidden">
             <div class="nav-header">
                 <div>
-                    <h3 id="adminWelcomeTitle">Board Admin Dashboard</h3>
-                    <p style="margin:0; font-size:12px; color:var(--text-sub);">Full Administrative Control</p>
+                    <h3>Master Board Admin Portal</h3>
+                    <p style="margin:0; font-size:12px; color:var(--text-sub);">Central Administrative Control</p>
                 </div>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
             <div class="tab-buttons">
-                <button id="tabBtnLeaders" class="active" onclick="switchAdminTab('leaders')">HR Leaders</button>
+                <button id="tabBtnLeaders" class="active" onclick="switchAdminTab('leaders')">Grant HR Access</button>
                 <button id="tabBtnCriteria" onclick="switchAdminTab('criteria')">Evaluation Criteria</button>
                 <button id="tabBtnEvals" onclick="switchAdminTab('evals')">All Evaluations & SWOT</button>
-                <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Change Password</button>
+                <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Admin Security</button>
             </div>
 
-            <!-- Manage Leaders Tab -->
+            <!-- Grant HR Access Tab -->
             <div id="adminSectionLeaders">
-                <h4 style="margin-top:0;">Add HR Leader / Committee Head</h4>
-                <label>Leader Name:</label>
+                <h4 style="margin-top:0;">Create HR Leader Access</h4>
+                <label>Leader Full Name:</label>
                 <input type="text" id="newLeaderName" placeholder="e.g. Mohamed Ali">
                 <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Username:</label><input type="text" id="newLeaderUser" placeholder="Username"></div>
-                    <div style="flex:1;"><label>Password:</label><input type="password" id="newLeaderPass" placeholder="Password"></div>
+                    <div style="flex:1;"><label>Assigned Username:</label><input type="text" id="newLeaderUser" placeholder="Username"></div>
+                    <div style="flex:1;"><label>Assigned Password:</label><input type="password" id="newLeaderPass" placeholder="Password"></div>
                 </div>
-                <label>Committee / Group Name:</label>
+                <label>Assigned Committee / Group:</label>
                 <input type="text" id="newLeaderCommittee" placeholder="e.g. Project Management, HR, Media...">
-                <button onclick="addLeader()">Add HR Leader</button>
+                <button onclick="addLeader()">Grant Access to Leader</button>
 
-                <h4 style="margin-top:25px;">Registered HR Leaders</h4>
+                <h4 style="margin-top:25px;">Active HR Leaders & Credentials</h4>
                 <table>
                     <thead><tr><th>Name</th><th>Username</th><th>Committee</th><th>Action</th></tr></thead>
                     <tbody id="leadersTableBody"></tbody>
@@ -151,16 +138,16 @@
                 </div>
             </div>
 
-            <!-- Board Security Tab -->
+            <!-- Admin Security Tab -->
             <div id="adminSectionSecurity" class="hidden">
-                <h4 style="margin-top:0;">Change Board Password</h4>
-                <label>New Password:</label>
-                <input type="password" id="changeBoardPass" placeholder="Enter new password">
-                <button onclick="updateBoardPassword()">Update Board Password</button>
+                <h4 style="margin-top:0;">Master Admin Credentials</h4>
+                <label>Change Admin Password:</label>
+                <input type="password" id="changeBoardPass" placeholder="Enter new admin password">
+                <button onclick="updateBoardPassword()">Update Password</button>
             </div>
         </div>
 
-        <!-- 3. HR Leader Dashboard -->
+        <!-- 3. HR Leader Portal -->
         <div id="leaderDashboard" class="card hidden">
             <div class="nav-header">
                 <div>
@@ -170,9 +157,9 @@
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
-            <!-- Manage My Committee Members -->
+            <!-- Add Member -->
             <div style="background:#0f172a; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid var(--border-color);">
-                <h4 style="margin:0 0 10px 0;">Add Member to My Committee</h4>
+                <h4 style="margin:0 0 10px 0;">Add Member to My Group</h4>
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="newMemberName" placeholder="Enter Member Full Name" style="margin-bottom:0;">
                     <button onclick="addMemberToCommittee()" style="width:150px;">Add Member</button>
@@ -186,7 +173,7 @@
             </select>
 
             <div id="leaderCriteriaInputsContainer">
-                <!-- Dynamic criteria with score and note inputs -->
+                <!-- Dynamic inputs -->
             </div>
 
             <label>SWOT Analysis (Strengths, Weaknesses, Opportunities, Threats):</label>
@@ -194,7 +181,7 @@
 
             <button onclick="submitMemberEvaluation()">Submit & Save Evaluation</button>
 
-            <h4 style="margin-top:25px;">Submitted Evaluations for My Committee</h4>
+            <h4 style="margin-top:25px;">Submitted Evaluations for My Group</h4>
             <table>
                 <thead><tr><th>Member</th><th>Total Score</th><th>Tier</th><th>Action</th></tr></thead>
                 <tbody id="leaderEvalsTableBody"></tbody>
@@ -203,11 +190,13 @@
     </div>
 
     <script>
-        // Data Structure
-        let db = JSON.parse(localStorage.getItem('enactus_main_db') || JSON.stringify({
-            board: null,
+        // MASTER ADMIN CONFIGURATION (Fixed Credentials)
+        const DEFAULT_ADMIN = { username: "admin", password: "adminpassword2026" };
+
+        let db = JSON.parse(localStorage.getItem('enactus_master_db') || JSON.stringify({
+            adminPass: DEFAULT_ADMIN.password,
             leaders: [],
-            members: [], // { name, committee, leaderName }
+            members: [],
             criteria: [
                 { name: "Task Completion & Quality", max: 40 },
                 { name: "Commitment & Attendance", max: 30 },
@@ -218,50 +207,18 @@
 
         let currentUser = null;
 
-        window.onload = function() {
-            checkSystemState();
-        };
-
-        function checkSystemState() {
-            if (!db.board) {
-                document.getElementById('authTitle').innerText = 'System Initial Setup';
-                document.getElementById('authSubtitle').innerText = 'Create primary Board Admin account to start.';
-                document.getElementById('registerBoardForm').classList.remove('hidden');
-                document.getElementById('loginForm').classList.add('hidden');
-            } else {
-                document.getElementById('authTitle').innerText = 'Enactus Qena Login';
-                document.getElementById('authSubtitle').innerText = 'Enter your credentials to continue.';
-                document.getElementById('registerBoardForm').classList.add('hidden');
-                document.getElementById('loginForm').classList.remove('hidden');
-            }
-        }
-
-        function registerBoard() {
-            const name = document.getElementById('regBoardName').value.trim();
-            const username = document.getElementById('regBoardUser').value.trim();
-            const password = document.getElementById('regBoardPass').value.trim();
-
-            if(!name || !username || !password) {
-                alert('Please fill all fields.');
-                return;
-            }
-
-            db.board = { name, username, password };
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
-            alert('Board Admin account created successfully! You can login now.');
-            checkSystemState();
-        }
-
         function handleLogin() {
             const user = document.getElementById('loginUser').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
 
-            if(db.board && user === db.board.username && pass === db.board.password) {
-                currentUser = { role: 'board', name: db.board.name };
+            // Single Master Admin Check
+            if(user === DEFAULT_ADMIN.username && pass === db.adminPass) {
+                currentUser = { role: 'admin', name: 'Board Admin' };
                 launchAdminDashboard();
                 return;
             }
 
+            // HR Leader Check
             const leader = db.leaders.find(l => l.username === user && l.password === pass);
             if(leader) {
                 currentUser = { role: 'leader', ...leader };
@@ -269,7 +226,7 @@
                 return;
             }
 
-            alert('Incorrect username or password!');
+            alert('Access Denied: Incorrect username or password!');
         }
 
         function logout() {
@@ -279,14 +236,12 @@
             document.getElementById('leaderDashboard').classList.add('hidden');
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
-            checkSystemState();
         }
 
-        // --- Board Admin Functions ---
+        // --- Admin Functions ---
         function launchAdminDashboard() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
-            document.getElementById('adminWelcomeTitle').innerText = `Board Admin: ${db.board.name}`;
             renderLeadersTable();
             renderCriteriaTable();
             renderAdminEvalsTable();
@@ -327,40 +282,40 @@
             const committee = document.getElementById('newLeaderCommittee').value.trim();
 
             if(!name || !username || !password || !committee) {
-                alert('Please fill all leader information fields.');
+                alert('Please fill all fields.');
                 return;
             }
-            if(db.leaders.some(l => l.username === username)) {
-                alert('Username already exists!');
+            if(username === DEFAULT_ADMIN.username || db.leaders.some(l => l.username === username)) {
+                alert('Username unavailable or already exists!');
                 return;
             }
 
             db.leaders.push({ name, username, password, committee });
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
 
             document.getElementById('newLeaderName').value = '';
             document.getElementById('newLeaderUser').value = '';
             document.getElementById('newLeaderPass').value = '';
             document.getElementById('newLeaderCommittee').value = '';
             renderLeadersTable();
-            alert('HR Leader added successfully!');
+            alert('HR Access granted successfully!');
         }
 
         function renderLeadersTable() {
             const tbody = document.getElementById('leadersTableBody');
             tbody.innerHTML = '';
             if(db.leaders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-sub);">No leaders added yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-sub);">No HR leaders added yet.</td></tr>';
                 return;
             }
             db.leaders.forEach((l, idx) => {
-                tbody.innerHTML += `<tr><td>${l.name}</td><td>${l.username}</td><td>${l.committee}</td><td><button onclick="deleteLeader(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td></tr>`;
+                tbody.innerHTML += `<tr><td>${l.name}</td><td>${l.username}</td><td>${l.committee}</td><td><button onclick="deleteLeader(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Revoke Access</button></td></tr>`;
             });
         }
 
         function deleteLeader(idx) {
             db.leaders.splice(idx, 1);
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             renderLeadersTable();
         }
 
@@ -372,11 +327,10 @@
                 return;
             }
             db.criteria.push({ name, max });
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             document.getElementById('newCritName').value = '';
             document.getElementById('newCritMax').value = '';
             renderCriteriaTable();
-            alert('Criterion added!');
         }
 
         function renderCriteriaTable() {
@@ -397,7 +351,7 @@
 
         function deleteCriterion(idx) {
             db.criteria.splice(idx, 1);
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             renderCriteriaTable();
         }
 
@@ -425,20 +379,20 @@
 
         function deleteEval(idx) {
             db.evaluations.splice(idx, 1);
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             renderAdminEvalsTable();
         }
 
         function updateBoardPassword() {
             const newPass = document.getElementById('changeBoardPass').value.trim();
             if(!newPass) { alert('Please enter a new password.'); return; }
-            db.board.password = newPass;
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            db.adminPass = newPass;
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             document.getElementById('changeBoardPass').value = '';
-            alert('Board password updated successfully!');
+            alert('Master Admin password updated successfully!');
         }
 
-        // --- HR Leader Functions ---
+        // --- Leader Functions ---
         function launchLeaderDashboard() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('leaderDashboard').classList.remove('hidden');
@@ -458,10 +412,10 @@
                 committee: currentUser.committee,
                 leaderName: currentUser.name
             });
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             document.getElementById('newMemberName').value = '';
             renderCommitteeMembersDropdown();
-            alert(`Member "${name}" added to your committee!`);
+            alert(`Member "${name}" added!`);
         }
 
         function renderCommitteeMembersDropdown() {
@@ -510,7 +464,6 @@
                 if(note) criteriaNotes.push(`${db.criteria[i].name}: ${note}`);
             }
 
-            // Performance Tiers as Requested
             let tier = 'Warning';
             let tierClass = 'tier-warning';
             if (totalScore >= 95) { tier = 'Best'; tierClass = 'tier-best'; }
@@ -530,7 +483,7 @@
                 date: new Date().toLocaleDateString()
             });
 
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             alert('Evaluation submitted successfully!');
             document.getElementById('selectCommitteeMember').value = '';
             document.getElementById('evalSwot').value = '';
@@ -562,7 +515,7 @@
 
         function deleteMyEval(idx) {
             db.evaluations.splice(idx, 1);
-            localStorage.setItem('enactus_main_db', JSON.stringify(db));
+            localStorage.setItem('enactus_master_db', JSON.stringify(db));
             renderLeaderEvalsTable();
         }
     </script>
