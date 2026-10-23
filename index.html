@@ -10,69 +10,18 @@
         h2 { text-align: center; color: #fbbf24; margin-bottom: 5px; }
         p.sub { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
         label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
-        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 13px; }
-        button { width: 100%; padding: 12px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 13px; }
+        button { width: 100%; padding: 12px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
         button:hover { background: #f59e0b; }
-        .tabs { display: flex; gap: 5px; margin-bottom: 20px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid #334155; }
-        .tab-btn { flex: 1; padding: 10px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .tab-btn.active { background: #fbbf24; color: #0f172a; }
-        .btn-danger { background: #991b1b; color: #f87171; margin-top: 5px; }
-        .btn-danger:hover { background: #7f1d1d; }
-        .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: bold; display: inline-block; }
-        .b-warn { background: #451a03; color: #f87171; border: 1px solid #991b1b; }
-        .b-bronze { background: #451a03; color: #fb923c; border: 1px solid #c2410c; }
-        .b-silver { background: #334155; color: #e2e8f0; border: 1px solid #64748b; }
-        .b-gold { background: #422006; color: #facc15; border: 1px solid #ca8a04; }
-        .b-best { background: #064e3b; color: #34d399; border: 1px solid #059669; }
     </style>
 </head>
 <body>
-
-    <div class="card" id="app"></div>
-
-    <script>
-        let db = JSON.parse(localStorage.getItem('enactus_final_system_v1')) || {
-            board: { name: "Board Admin", pass: "board123" },
-            leaders: [],
-            members: [],
-            evaluations: [],
-            personalCriteria: [
-                { name: "Commitment & Attendance", max: 5 },
-                { name: "Task Responsibility", max: 5 },
-                { name: "Teamwork & Cooperation", max: 5 },
-                { name: "Communication Skills", max: 5 }
-            ],
-            techCriteria: {
-                PM: [{ name: "Problem Solving", max: 30 }, { name: "Project Planning", max: 30 }],
-                PR: [{ name: "Negotiation", max: 30 }, { name: "Sponsorship", max: 30 }],
-                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }],
-                Media: [{ name: "Design Quality", max: 30 }, { name: "Content Creation", max: 30 }]
-            }
-        };
-
-        function saveDB() {
-            localStorage.setItem('enactus_final_system_v1', JSON.stringify(db));
-        }
-
-        let loginRole = 'board';
-        let currentView = 'login';
-        let currentUser = null;
-        let activeMember = null;
-
-        function getTier(score) {
-            if (score < 55) return { name: "Warning", class: "b-warn", emoji: "⚠️" };
-            if (score < 65) return { name: "Bronze", class: "b-bronze", emoji: "🥉" };
-            if (score < 85) return { name: "Silver", class: "b-silver", emoji: "🥈" };
-            if (score < 95) return { name: "Gold", class: "b-gold", emoji: "🥇" };
-            return { name: "Best", class: "b-best", emoji: "💎" };
-        }
-
-        function render() {
-            const app = document.getElementById('app');
-
-            if (currentView === 'login') {
-                app.innerHTML = `
-                    <h2>Enactus Qena</h2>
-                    <p class="sub">Evaluation & Performance System</p>
-                    
-                    <div class="tabs"> 
+    <div class="card">
+        <h2>Enactus Qena</h2>
+        <p class="sub">Evaluation System Online</p>
+        <label>Enter Your Name:</label>
+        <input type="text" id="nameInput" placeholder="Your Name">
+        <button onclick="alert('System Works Successfully, Omar!')">Test System</button>
+    </div>
+</body>
+</html>
