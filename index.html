@@ -3,117 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena Evaluation System</title>
+    <title>Enactus Qena Evaluation</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
-        .card { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        h2 { text-align: center; color: #fbbf24; margin-bottom: 5px; }
-        p.sub { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 12px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #fbbf24; margin-top: 0; }
+        label { display: block; margin-top: 15px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 20px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
         button:hover { background: #f59e0b; }
-        .tabs { display: flex; gap: 5px; margin-bottom: 20px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid #334155; }
-        .tab-btn { flex: 1; padding: 10px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .tab-btn.active { background: #fbbf24; color: #0f172a; }
-        .btn-danger { background: #991b1b; color: #f87171; margin-top: 5px; }
-        .btn-danger:hover { background: #7f1d1d; }
-        .btn-secondary { background: #334155; color: #fff; margin-bottom: 10px; }
-        .btn-secondary:hover { background: #475569; }
-        .score-box { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; font-size: 13px; }
+        .success { text-align: center; color: #34d399; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="card" id="app">
-        <!-- Dynamic Content -->
+    <div class="box" id="app">
+        <h2>Enactus Qena</h2>
+        <p style="text-align: center; color: #94a3b8; font-size: 13px;">System Check</p>
+
+        <label>Select Role:</label>
+        <select id="role" onchange="toggleRole()">
+            <option value="board">Board Admin</option>
+            <option value="leader">HR Leader</option>
+        </select>
+
+        <div id="boardBox">
+            <label>Board Admin Name:</label>
+            <input type="text" id="bName" value="Board Admin">
+        </div>
+
+        <div id="leaderBox" style="display:none;">
+            <label>HR Leader Name:</label>
+            <input type="text" id="lName" value="Omar Leader">
+        </div>
+
+        <label>Password:</label>
+        <input type="password" id="pass" placeholder="Enter password (board123)">
+
+        <button onclick="doLogin()">Sign In</button>
     </div>
 
     <script>
-        // Database
-        let db = JSON.parse(localStorage.getItem('enactus_final_db_v2')) || {
-            board: { name: "Board Admin", pass: "board123" },
-            leaders: [],
-            members: [],
-            evaluations: [],
-            personalCriteria: [
-                { name: "Commitment & Attendance", max: 5 },
-                { name: "Task Responsibility", max: 5 },
-                { name: "Teamwork & Cooperation", max: 5 },
-                { name: "Communication", max: 5 }
-            ],
-            techCriteria: {
-                PM: [{ name: "Problem Solving", max: 30 }, { name: "Project Planning", max: 30 }],
-                PR: [{ name: "Negotiation", max: 30 }, { name: "Sponsorship", max: 30 }],
-                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }],
-                Media: [{ name: "Design Quality", max: 30 }, { name: "Content Creation", max: 30 }]
+        function toggleRole() {
+            var role = document.getElementById('role').value;
+            if(role === 'board') {
+                document.getElementById('boardBox').style.display = 'block';
+                document.getElementById('leaderBox').style.display = 'none';
+            } else {
+                document.getElementById('boardBox').style.display = 'none';
+                document.getElementById('leaderBox').style.display = 'block';
             }
-        };
-
-        function saveDB() {
-            localStorage.setItem('enactus_final_db_v2', JSON.stringify(db));
         }
 
-        let currentRole = 'leader'; // leader or board
-        let currentUser = null;
-        let currentView = 'login'; // login, dashboard, eval
-        let activeMember = null;
+        function doLogin() {
+            var role = document.getElementById('role').value;
+            var pass = document.getElementById('pass').value;
 
-        function render() {
-            const app = document.getElementById('app');
-
-            if (currentView === 'login') {
-                app.innerHTML = `
-                    <h2>Enactus Qena</h2>
-                    <p class="sub">Evaluation System</p>
-                    
-                    <div class="tabs">
-                        <button class="tab-btn ${currentRole === 'leader' ? 'active' : ''}" onclick="setRole('leader')">HR Leader</button>
-                        <button class="tab-btn ${currentRole === 'board' ? 'active' : ''}" onclick="setRole('board')">Board Admin</button>
-                    </div>
-
-                    ${currentRole === 'leader' ? `
-                        <label>Select Committee:</label>
-                        <select id="commSelect" onchange="updateLeaderDropdown()">
-                            ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
-                        </select>
-
-                        <label>Select HR Leader Name:</label>
-                        <select id="leaderSelect">
-                            <!-- Dynamic -->
-                        </select>
-                    ` : `
-                        <label>Board Admin Name:</label>
-                        <input type="text" id="boardNameInput" value="${db.board.name}" placeholder="Enter your name">
-                    `}
-
-                    <label>Password:</label>
-                    <input type="password" id="passInput" placeholder="••••••••">
-
-                    <button onclick="login()">Sign In</button>
-                `;
-                if (currentRole === 'leader') updateLeaderDropdown();
-            } 
-            else if (currentView === 'dashboard') {
-                if (currentUser.role === 'board') {
-                    app.innerHTML = `
-                        <h2>Welcome, ${currentUser.name}</h2>
-                        <p class="sub">Board Administration Dashboard</p>
-                        
-                        <div style="background:#0f172a; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #334155;">
-                            <label>Add New HR Leader:</label>
-                            <input type="text" id="newLName" placeholder="Leader Full Name">
-                            <select id="newLComm">
-                                ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
-                            </select>
-                            <input type="password" id="newLPass" placeholder="Leader Password">
-                            <button onclick="addLeader()">Add Leader</button>
-                        </div>
-
-                        <h3>Existing HR Leaders (${db.leaders.length}):</h3>
-                        <div style="max-height: 180px; overflow-y: auto; margin-bottom: 15px;">
-                            ${db.leaders.length === 0 ? '<p style="color:#94a3b8; text-align:center;">No leaders added yet.</p>' :
-                                db.leaders.map(l => `
-                                    <div style="background:#0f172a; padding:8px; margin-bottom:6px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
-                                        <span style="font-size:13px;">${l.name} <b style="color:#fbbf24;">[${l.committee}]</b></span>
-                                        <button onclick="deleteLeader('${l.id}')" style="width:auto; padding:4px 8px; background:#991b1b; color:#fff; font-size:11px;">
+            if(role === 'board') {
+                if(pass === 'board123') {
+                    document.getElementById('app').innerHTML = '<h2 class="success">Welcome Board Admin!</h2><p style="text-align:center; color:#cbd5e1;">System is working perfectly.</p><button onclick="location.reload()">Logout</button>';
+                } else {
+                    alert('Wrong Password! Use: board123');
+                }
+            } else {
+                document.getElementById('app').innerHTML = '<h2 class="success">Welcome HR Leader!</h2><p style="text-align:center; color:#cbd5e1;">System is working perfectly.</p><button onclick="location.reload()">Logout</button>';
+            }
+        }
+    </script>
+</body>
+</html>
