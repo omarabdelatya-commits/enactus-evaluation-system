@@ -1,206 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enactus Qena Evaluation System</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans">
-  <div id="app" class="min-h-screen py-8 px-4 sm:px-6 lg:px-8"></div>
-
-  <script>
-    const usersDB = {
-      "board": { pass: "board123", role: "board", name: "Board Management" },
-      "hr_pm": { pass: "pm123", role: "hr", committee: "PM", name: "PM HR Leader" },
-      "hr_pr": { pass: "pr123", role: "hr", committee: "PR", name: "PR HR Leader" },
-      "hr_hr": { pass: "hr123", role: "hr", committee: "HR", name: "HR HR Leader" },
-      "hr_media": { pass: "media123", role: "hr", committee: "Media", name: "Media HR Leader" },
-      "hr_pres": { pass: "pres123", role: "hr", committee: "Presentation", name: "Presentation HR Leader" },
-      "hr_oc": { pass: "oc123", role: "hr", committee: "OC", name: "OC HR Leader" }
-    };
-
-    const committees = {
-      PM: { 
-        name: "PM Committee (Project Management)", 
-        techCriteria: [
-          "Research & Problem Identification (10)",
-          "Research Quality & Validation (10)",
-          "Project Planning & Documentation (10)",
-          "Task Execution & Deliverables (10)",
-          "Critical Thinking & Problem Solving (10)",
-          "Project Development & Practical Contribution (10)"
-        ] 
-      },
-      PR: { 
-        name: "PR Committee (Public Relations)", 
-        techCriteria: [
-          "Communication & Negotiation (10)",
-          "Sponsorship Research & Prospecting (10)",
-          "Outreach & Follow-up (10)",
-          "Partnership Development (10)",
-          "Proposal & Pitch Quality (10)",
-          "Task Execution & Reporting (10)"
-        ] 
-      },
-      HR: { 
-        name: "HR Committee (Human Resources)", 
-        techCriteria: [
-          "HR Knowledge & Application (10)",
-          "Recruitment & Interviewing (10)",
-          "Data Management & Documentation (10)",
-          "Member Follow-up & Evaluation (10)",
-          "Conflict Handling & Fairness (10)",
-          "Confidentiality & Professional HR Practice (10)"
-        ] 
-      },
-      Media: { 
-        name: "Media Committee", 
-        techCriteria: [
-          "Content Creation & Copywriting (10)",
-          "Design / Editing Quality (10)",
-          "Branding & Visual Consistency (10)",
-          "Content Planning & Execution (10)",
-          "Creativity & Audience Relevance (10)",
-          "Technical Skills & File Management (10)"
-        ] 
-      },
-      Presentation: { 
-        name: "Presentation Committee", 
-        techCriteria: [
-          "Presentation Structure & Storytelling (10)",
-          "Research & Content Accuracy (10)",
-          "Slide Design & Visual Communication (10)",
-          "Public Speaking & Delivery (10)",
-          "Persuasion & Audience Engagement (10)",
-          "Rehearsal, Feedback & Improvement (10)"
-        ] 
-      },
-      OC: { 
-        name: "OC Committee (Organizing)", 
-        techCriteria: [
-          "Event Planning & Preparation (10)",
-          "Logistics & Resource Management (10)",
-          "Coordination & Task Distribution (10)",
-          "On-ground Execution (10)",
-          "Contingency Planning & Problem Solving (10)",
-          "Post-event Reporting & Organization (10)"
-        ] 
-      }
-    };
-
-    const personalCriteria = [
-      "Commitment & Attendance (5)",
-      "Task Commitment & Responsibility (5)",
-      "Social Media Engagement (5)",
-      "Respect for Hierarchy & Professionalism (5)",
-      "Communication & Responsiveness (5)",
-      "Teamwork & Cooperation (5)",
-      "Initiative & Problem Solving (5)",
-      "Feedback & Improvement (5)"
-    ];
-
-    let currentUser = null;
-    let savedEvaluations = [];
-
-    function renderLogin() {
-      document.getElementById('app').innerHTML = `
-        <div class="max-w-md w-full mx-auto bg-white rounded-2xl shadow-2xl p-8 mt-12">
-          <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-emerald-700">Enactus Qena Evaluation</h1>
-            <p class="text-slate-500 text-sm mt-1">Secure Sign In (Username & Password)</p>
-          </div>
-          <form onsubmit="handleLogin(event)" class="space-y-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Username</label>
-              <input type="text" id="usernameInput" required placeholder="e.g. board or hr_pm" class="w-full p-3 border rounded-xl text-sm bg-slate-50 font-medium outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
-              <input type="password" id="passwordInput" required placeholder="Enter password" class="w-full p-3 border rounded-xl text-sm bg-slate-50 font-medium outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-            <div class="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border space-y-1">
-              <p class="font-bold text-slate-700">🔑 Demo Credentials:</p>
-              <p>• Board: <code class="text-blue-700 font-bold">board</code> / Pass: <code class="text-slate-700 font-bold">board123</code></p>
-              <p>• PM HR: <code class="text-emerald-700 font-bold">hr_pm</code> / Pass: <code class="text-slate-700 font-bold">pm123</code></p>
-              <p>• PR HR: <code class="text-emerald-700 font-bold">hr_pr</code> / Pass: <code class="text-slate-700 font-bold">pr123</code></p>
-              <p>• HR HR: <code class="text-emerald-700 font-bold">hr_hr</code> / Pass: <code class="text-slate-700 font-bold">hr123</code></p>
-              <p>• Media HR: <code class="text-emerald-700 font-bold">hr_media</code> / Pass: <code class="text-slate-700 font-bold">media123</code></p>
-              <p>• Presentation HR: <code class="text-emerald-700 font-bold">hr_pres</code> / Pass: <code class="text-slate-700 font-bold">pres123</code></p>
-              <p>• OC HR: <code class="text-emerald-700 font-bold">hr_oc</code> / Pass: <code class="text-slate-700 font-bold">oc123</code></p>
-            </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
-              Sign In
-            </button>
-          </form>
-        </div>
-      `;
-    }
-
-    function handleLogin(e) {
-      e.preventDefault();
-      const u = document.getElementById('usernameInput').value.trim().toLowerCase();
-      const p = document.getElementById('passwordInput').value.trim();
-
-      if (usersDB[u] && usersDB[u].pass === p) {
-        currentUser = usersDB[u];
-        renderDashboard('form');
-      } else {
-        alert('Invalid Username or Password! Please check your credentials.');
-      }
-    }
-
-    function renderDashboard(tab) {
-      const commKey = currentUser.role === 'hr' ? currentUser.committee : 'PM';
-      const commData = committees[commKey];
-
-      let contentHtml = '';
-
-      if (tab === 'form') {
-        contentHtml = `
-          <form onsubmit="submitEval(event)" class="space-y-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border">
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Member Full Name</label>
-                <input type="text" id="memberName" required placeholder="Enter member name" class="w-full p-2 border rounded-lg text-sm bg-white" />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Month</label>
-                <select id="evalMonth" class="w-full p-2 border rounded-lg text-sm bg-white">
-                  ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => `<option value="${m}">${m}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Committee</label>
-                ${currentUser.role === 'hr' 
-                  ? `<input type="text" disabled value="${commData.name}" class="w-full p-2 border rounded-lg text-sm bg-slate-200 font-bold text-slate-700 cursor-not-allowed" />`
-                  : `<select id="selectedComm" onchange="renderDashboard('form')" class="w-full p-2 border rounded-lg text-sm bg-white font-bold text-emerald-700">
-                       ${Object.entries(committees).map(([k, c]) => `<option value="${k}" ${k === commKey ? 'selected' : ''}>${c.name}</option>`).join('')}
-                     </select>`
-                }
-              </div>
-            </div>
-
-            <div class="border rounded-xl p-4 bg-emerald-50/40">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-emerald-800">1. Personal Evaluation (Out of 40)</h2>
-              </div>
-              <div class="space-y-3">
-                ${personalCriteria.map((crit, idx) => `
-                  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-3 rounded-lg border gap-2">
-                    <span class="text-sm font-medium text-slate-700">${idx + 1}.${crit}</span>
-                    <input type="number" min="0" max="5" value="5" id="per_${idx}" oninput="calculateTotal()" class="w-20 p-1.5 border rounded-lg text-center font-bold text-emerald-700" />
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-
-            <div class="border rounded-xl p-4 bg-sky-50/40">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-sky-800">2. Technical Evaluation: ${commData.name} (Out of 60)</h2>
-              </div>
-              <div class="space-y-3">
-                ${commData.techCriteria.map((crit, idx) => `
-                  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-3 rounded-lg border gap-2">
-                    <span class="text-sm font-medium text-slate-700">${idx + 1}.${crit}</span>
-                    <input type="number" min="0" max="10" value="10" id="tech_${idx}" oninput="calculateTotal()" class="w-20 p-1.5 border rounded-lg text-center font-bold text-sky-700
+<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen">
+  <div class="text-center p-8 bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full border border-slate-700">
+    <h1 class="text-3xl font-bold text-emerald-400 mb-2">Enactus Qena</h1>
+    <p class="text-slate-400 text-sm mb-6">Evaluation System is Live & Online</p>
+    <div class="bg-slate-900 p-4 rounded-xl text-left text-xs font-mono text-emerald-300 border border-slate-800 mb-4">
+      <p>Status: Active ✅</p>
+      <p>Platform: Vercel Cloud ✅</p>
+    </div>
+    <button onclick="alert('System is fully operational!')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">
+      Access System
+    </button>
+  </div>
+</body>
+</html>
