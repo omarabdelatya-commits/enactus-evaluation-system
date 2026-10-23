@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام تقييم إنكتوس قنا</title>
+    <title>Enactus Qena Evaluation System</title>
     <style>
-        body { font-family: Tahoma, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
         .card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
         h2 { text-align: center; color: #fbbf24; margin-bottom: 5px; }
         p.sub { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
@@ -31,27 +31,27 @@
     <div class="card" id="app"></div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('enactus_live_v1')) || {
+        let db = JSON.parse(localStorage.getItem('enactus_english_v1')) || {
             board: { name: "Board Admin", pass: "board123" },
             leaders: [],
             members: [],
             evaluations: [],
             personalCriteria: [
-                { name: "الالتزام والحضور", max: 5 },
-                { name: "مسؤولية التمهيد والمهام", max: 5 },
-                { name: "العمل الجماعي والتعاون", max: 5 },
-                { name: "التواصل الفعال", max: 5 }
+                { name: "Commitment & Attendance", max: 5 },
+                { name: "Task Responsibility", max: 5 },
+                { name: "Teamwork & Cooperation", max: 5 },
+                { name: "Communication Skills", max: 5 }
             ],
             techCriteria: {
-                PM: [{ name: "حل المشكلات", max: 30 }, { name: "التخطيط للمشروع", max: 30 }],
-                PR: [{ name: "التفاوض", max: 30 }, { name: "الرعاية والسبอนسر", max: 30 }],
-                HR: [{ name: "إدارة المقابلات (Recruitment)", max: 30 }, { name: "علاقات الأعضاء", max: 30 }],
-                Media: [{ name: "جودة التصميم", max: 30 }, { name: "ابتكار المحتوى", max: 30 }]
+                PM: [{ name: "Problem Solving", max: 30 }, { name: "Project Planning", max: 30 }],
+                PR: [{ name: "Negotiation", max: 30 }, { name: "Sponsorship", max: 30 }],
+                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }],
+                Media: [{ name: "Design Quality", max: 30 }, { name: "Content Creation", max: 30 }]
             }
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_live_v1', JSON.stringify(db));
+            localStorage.setItem('enactus_english_v1', JSON.stringify(db));
         }
 
         let loginRole = 'board';
@@ -60,11 +60,11 @@
         let activeMember = null;
 
         function getTier(score) {
-            if (score < 55) return { name: "Warning (تحذير)", class: "b-warn", emoji: "⚠️" };
-            if (score < 65) return { name: "Bronze (برونزي)", class: "b-bronze", emoji: "🥉" };
-            if (score < 85) return { name: "Silver (فضي)", class: "b-silver", emoji: "🥈" };
-            if (score < 95) return { name: "Gold (ذهبي)", class: "b-gold", emoji: "🥇" };
-            return { name: "Best (الأفضل)", class: "b-best", emoji: "💎" };
+            if (score < 55) return { name: "Warning", class: "b-warn", emoji: "⚠️" };
+            if (score < 65) return { name: "Bronze", class: "b-bronze", emoji: "🥉" };
+            if (score < 85) return { name: "Silver", class: "b-silver", emoji: "🥈" };
+            if (score < 95) return { name: "Gold", class: "b-gold", emoji: "🥇" };
+            return { name: "Best", class: "b-best", emoji: "💎" };
         }
 
         function render() {
@@ -73,59 +73,59 @@
             if (currentView === 'login') {
                 app.innerHTML = `
                     <h2>Enactus Qena</h2>
-                    <p class="sub">نظام تقييم الأعضاء والليدرز</p>
+                    <p class="sub">Evaluation & Performance System</p>
                     
                     <div class="tabs">
-                        <button class="tab-btn ${loginRole === 'board' ? 'active' : ''}" onclick="setRole('board')">مدير المجلس (Board)</button>
-                        <button class="tab-btn ${loginRole === 'leader' ? 'active' : ''}" onclick="setRole('leader')">قائد HR</button>
+                        <button class="tab-btn ${loginRole === 'board' ? 'active' : ''}" onclick="setRole('board')">Board Admin</button>
+                        <button class="tab-btn ${loginRole === 'leader' ? 'active' : ''}" onclick="setRole('leader')">HR Leader</button>
                     </div>
 
                     ${loginRole === 'board' ? `
-                        <label>اسم مدير المجلس:</label>
-                        <input type="text" id="boardNameInput" value="${db.board.name}" placeholder="أدخل اسمك">
+                        <label>Board Admin Name:</label>
+                        <input type="text" id="boardNameInput" value="${db.board.name}" placeholder="Enter your name">
                     ` : `
-                        <label>اختر اللجنة (Committee):</label>
+                        <label>Select Committee:</label>
                         <select id="commSelect" onchange="updateLeaderDropdown()">
                             ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
                         </select>
-                        <label>اختر قائد الـ HR:</label>
+                        <label>Select HR Leader:</label>
                         <select id="leaderSelect"></select>
                     `}
 
-                    <label>كلمة المرور:</label>
+                    <label>Password:</label>
                     <input type="password" id="passInput" placeholder="••••••••">
 
-                    <button onclick="handleLogin()">تسجيل الدخول</button>
+                    <button onclick="handleLogin()">Sign In</button>
                 `;
                 if (loginRole === 'leader') updateLeaderDropdown();
             } 
             else if (currentView === 'dashboard') {
                 if (currentUser.role === 'board') {
                     app.innerHTML = `
-                        <h2>مرحباً، ${currentUser.name}</h2>
-                        <p class="sub">لوحة تحكم المجلس (صلاحيات كاملة)</p>
+                        <h2>Welcome, ${currentUser.name}</h2>
+                        <p class="sub">Board Administration (Full Access)</p>
                         
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
-                            <label style="color:#fbbf24;">إعدادات وحماية البورد:</label>
-                            <input type="text" id="updBoardName" value="${db.board.name}" placeholder="اسم البورد">
-                            <input type="password" id="updBoardPass" placeholder="كلمة مرور جديدة (اختياري)">
-                            <button onclick="updateBoard()">حفظ التعديلات</button>
+                            <label style="color:#fbbf24;">Board Security Settings:</label>
+                            <input type="text" id="updBoardName" value="${db.board.name}" placeholder="Board Name">
+                            <input type="password" id="updBoardPass" placeholder="New Password (Optional)">
+                            <button onclick="updateBoard()">Save Changes</button>
                         </div>
 
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
-                            <label style="color:#fbbf24;">إضافة قائد HR جديد:</label>
-                            <input type="text" id="lName" placeholder="اسم الليدر بالكامل">
+                            <label style="color:#fbbf24;">Add New HR Leader:</label>
+                            <input type="text" id="lName" placeholder="Leader Full Name">
                             <select id="lComm">
                                 ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
                             </select>
-                            <input type="password" id="lPass" placeholder="كلمة المرور">
-                            <button onclick="addLeader()">إضافة الليدر</button>
+                            <input type="password" id="lPass" placeholder="Password">
+                            <button onclick="addLeader()">Add Leader</button>
                         </div>
 
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
-                            <label style="color:#fbbf24;">تقرير الأعضاء والتقييمات (${db.members.length}):</label>
+                            <label style="color:#fbbf24;">Members Report (${db.members.length}):</label>
                             <div style="max-height:140px; overflow-y:auto;">
-                                ${db.members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">لا توجد أعضاء مسجلين بعد.</p>' :
+                                ${db.members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">No members registered yet.</p>' :
                                     db.members.map(m => {
                                         const leader = db.leaders.find(l => l.id === m.leaderId) || { committee: 'N/A' };
                                         const ev = db.evaluations.find(e => e.memberId === m.id);
@@ -134,7 +134,7 @@
                                             <div style="background:#1e293b; padding:8px; margin-bottom:6px; border-radius:6px; font-size:12px;">
                                                 <div style="display:flex; justify-content:space-between; font-weight:bold;">
                                                     <span>${m.name} [${leader.committee}]</span>
-                                                    ${ev ? `<span class="badge ${tier.class}">${tier.emoji} ${tier.name} (${ev.totalScore})</span>` : '<span style="color:#f87171;">لم يتم التقييم</span>'}
+                                                    ${ev ? `<span class="badge ${tier.class}">${tier.emoji} ${tier.name} (${ev.totalScore})</span>` : '<span style="color:#f87171;">Not Evaluated</span>'}
                                                 </div>
                                             </div>
                                         `;
@@ -142,21 +142,19 @@
                             </div>
                         </div>
 
-                        <button onclick="logout()" class="btn-danger">تسجيل الخروج</button>
+                        <button onclick="logout()" class="btn-danger">Logout</button>
                     `;
                 } else {
                     const members = db.members.filter(m => m.leaderId === currentUser.id);
                     app.innerHTML = `
-                        <h2>مرحباً، ${currentUser.name}</h2>
-                        <p class="sub">لجنة: ${currentUser.committee}</p>
+                        <h2>Welcome, ${currentUser.name}</h2>
+                        <p class="sub">Committee: ${currentUser.committee}</p>
 
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
-                            <label style="color:#fbbf24;">إضافة عضو جديد لمجموعتك:</label>
-                            <input type="text" id="newMemName" placeholder="اسم العضو">
-                            <button onclick="addMember()">إضافة العضو</button>
+                            <label style="color:#fbbf24;">Add Committee Member:</label>
+                            <input type="text" id="newMemName" placeholder="Member Name">
+                            <button onclick="addMember()">Add Member</button>
                         </div>
 
-                        <label style="color:#fbbf24;">أعضاء مجموعتي (${members.length}):</label>
-                        <div style="max-height:180px; overflow-y:auto; margin-bottom:12px;">
-                            ${members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">لم تقم بإضافة أعضاء بعد.</p>' :
-                                members.map(m =>
+                        <label style="color:#fbbf24;">My Group Members (${members.length}):</label>
+                        <div style="max-height:180px; overflow-y:auto; margin-bottom:1
