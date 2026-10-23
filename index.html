@@ -1,22 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enactus Qena Evaluation System</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen">
-  <div class="text-center p-8 bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full border border-slate-700">
-    <h1 class="text-3xl font-bold text-emerald-400 mb-2">Enactus Qena</h1>
-    <p class="text-slate-400 text-sm mb-6">Evaluation System is Live & Online</p>
-    <div class="bg-slate-900 p-4 rounded-xl text-left text-xs font-mono text-emerald-300 border border-slate-800 mb-4">
-      <p>Status: Active ✅</p>
-      <p>Platform: Vercel Cloud ✅</p>
-    </div>
-    <button onclick="alert('System is fully operational!')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">
-      Access System
-    </button>
-  </div>
+<body class="bg-slate-50 text-slate-800 font-sans">
+  <div id="app" class="min-h-screen flex items-center justify-center p-4"></div>
+
+  <script>
+    const leadersDB = [
+      { id: "hr_pm", name: "PM • HR Leader", pass: "pm123", committee: "PM" },
+      { id: "hr_pr", name: "PR • HR Leader", pass: "pr123", committee: "PR" },
+      { id: "hr_hr", name: "HR • HR Leader", pass: "hr123", committee: "HR" },
+      { id: "hr_media", name: "Media • HR Leader", pass: "media123", committee: "Media" },
+      { id: "hr_pres", name: "Presentation • HR Leader", pass: "pres123", committee: "Presentation" },
+      { id: "hr_oc", name: "OC • HR Leader", pass: "oc123", committee: "OC" }
+    ];
+
+    const boardPass = "board123";
+
+    let activeTab = 'leader';
+    let selectedLeaderId = leadersDB[0].id;
+
+    function renderLogin() {
+      document.getElementById('app').innerHTML = `
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-200">
+          <div class="mb-6">
+            <h1 class="text-3xl font-extrabold text-slate-900 leading-tight">Evaluation Members</h1>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">Enactus Qena</h2>
+            <p class="text-slate-500 text-sm">Evaluate each member in the committee. Each leader accesses their members only.</p>
+          </div>
+
+          <div class="bg-amber-50/70 border border-amber-300 p-4 rounded-xl mb-6 text-xs text-amber-900 leading-relaxed">
+            <b>Single-device mode:</b> The page is not connected to a shared backend, so inputs are saved locally per device. Securely log in with your assigned role to access correct permissions.
+          </div>
+
+          <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-6 font-bold text-sm">
+            <button onclick="switchTab('leader')" class="py-2.5 rounded-lg transition ${activeTab === 'leader' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:text-slate-900'}">
+              Leader Login
+            </button>
+            <button onclick="switchTab('board')" class="py-2.5 rounded-lg transition ${activeTab === 'board' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:text-slate-900'}">
+              Board Admin
+            </button>
+          </div>
+
+          <form onsubmit="handleLogin(event)" class="space-y-4">
+            ${activeTab === 'leader' ? `
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Select Leader</label>
+                <select id="leaderSelect" onchange="selectedLeaderId=this.value" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-slate-900 outline-none">
+                  ${leadersDB.map(l => `<option value="${l.id}" ${l.id === selectedLeaderId ? 'selected' : ''}>${l.name}</option>`).join('')}
+                </select>
+              </div>
+            ` : `
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Board Administrator</label>
+                <input type="text" disabled value="Enactus Qena Board" class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-500 cursor-not-allowed" />
+              </div>
+            `}
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Password</label>
+              <input type="password" id="passwordInput" required placeholder="Enter your password" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-slate-900 outline-none" />
+            </div>
+
+            <button type="submit" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold py-3.5 rounded-xl shadow transition mt-2">
+              Sign In
+            </button>
+          </form>
+        </div>
+      `;
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      renderLogin();
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const pass = document.getElementById('passwordInput').value.trim();
+
+      if (activeTab === 'board') {
+        if (pass === boardPass) {
+          alert('Logged in successfully as Board Admin!');
+          renderDashboard({ name: 'Board Administrator', role: 'board' });
+        } else {
+          alert('Incorrect Board Password! (Hint: board123)');
+        }
+      } else {
+        const leader = leadersDB.find(l => l.id === selectedLeaderId);
+        if (leader && leader.pass === pass) {
+          alert(`Logged in successfully as ${leader.name}!`);
+          renderDashboard({ name: leader.name, role: 'hr', committee: leader.committee });
+        } else {
+          alert('Incorrect Password for this Leader! (Hint for PM: pm123, PR: pr123, etc.)');
+        }
+      }
+    }
+
+    function renderDashboard(user) {
+      document.getElementById('app').innerHTML = `
+        <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+          <div class="flex justify-between items-center border-b pb-4 mb-6">
+            <div>
+              <h1 class="text-xl font-bold text-slate-900">Enactus Qena Evaluation</h1>
+              <p class="text-xs text-slate-500">Logged in as: <span class="font-bold text-slate-800">${user.name}</span></p>
+            </div>
+            <button onclick="renderLogin()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-100 transition">
+              Logout
+            </button>
+          </div>
+          <div class="bg-slate-50 p-6 rounded-xl border text-center space-y-4">
+            <h2 class="text-lg font-bold text-emerald-700">🚀 Welcome to the Evaluation Panel</h2>
+            <p class="text-sm text-slate-600">You have successfully authenticated. Ready to evaluate your committee members.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    renderLogin();
+  </script>
 </body>
 </html>
