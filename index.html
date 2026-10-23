@@ -14,11 +14,9 @@
 
     <script>
         // Database Initialization
-        let db = JSON.parse(localStorage.getItem('enactus_master_v4')) || {
-            board: { name: "Omar", pass: "board123" },
-            leaders: [
-                { id: "l1", name: "Ahmed HR", committee: "PM", pass: "123" }
-            ],
+        let db = JSON.parse(localStorage.getItem('enactus_master_v6')) || {
+            board: { name: "Board Admin", pass: "board123" },
+            leaders: [],
             members: [],
             evaluations: [],
             personalCriteria: [
@@ -38,7 +36,7 @@
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_master_v4', JSON.stringify(db));
+            localStorage.setItem('enactus_master_v6', JSON.stringify(db));
         }
 
         let currentView = 'login'; // login, dashboard, eval
@@ -77,14 +75,14 @@
                             </div>
                         ` : `
                             <div>
-                                <label class="block text-slate-300 font-bold mb-1">Board Admin Username</label>
-                                <input type="text" id="boardNameInput" value="${db.board.name}" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold" />
+                                <label class="block text-slate-300 font-bold mb-1">Board Admin Name</label>
+                                <input type="text" id="boardNameInput" placeholder="Enter your name" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold" />
                             </div>
                         `}
 
                         <div>
                             <label class="block text-slate-300 font-bold mb-1">Password:</label>
-                            <input type="password" id="passInput" placeholder="${loginRole === 'board' ? 'Enter: board123' : 'Enter Leader Password'}" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white" />
+                            <input type="password" id="passInput" placeholder="••••••••" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white" />
                         </div>
 
                         <button onclick="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3.5 rounded-xl shadow text-sm transition mt-2">Sign In</button>
@@ -129,6 +127,16 @@
                         </div>
                     ` : `
                         <div class="space-y-4 text-xs max-h-[70vh] overflow-y-auto pr-1">
+                            <!-- Board Settings (Change Name / Password) -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                                <h3 class="font-bold text-emerald-400 text-sm">🛡️ Board Account Settings</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <input type="text" id="updateBoardName" value="${db.board.name}" placeholder="New Board Name" class="p-2 bg-slate-800 text-white rounded border border-slate-700" />
+                                    <input type="password" id="updateBoardPass" placeholder="New Board Password" class="p-2 bg-slate-800 text-white rounded border border-slate-700" />
+                                </div>
+                                <button onclick="updateBoardSettings()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded">Save Board Settings</button>
+                            </div>
+
                             <!-- Add HR Leader Box -->
                             <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
                                 <h3 class="font-bold text-amber-400 text-sm">➕ Add New HR Leader</h3>
@@ -140,7 +148,7 @@
                                 <button onclick="addLeader()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg">Add Leader</button>
                             </div>
 
-                            <!-- Manage Criteria & Max Marks / Add & Delete Criteria -->
+                            <!-- Manage Criteria & Max Marks -->
                             <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
                                 <h3 class="font-bold text-sky-400 text-sm">⚙️ Manage Personal Criteria & Max Marks</h3>
                                 <div class="space-y-2">
@@ -159,11 +167,11 @@
                                 </div>
                             </div>
 
-                            <!-- Manage Leaders List (Reset Passwords & Delete) -->
+                            <!-- Manage Leaders List -->
                             <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2">
                                 <h3 class="font-bold text-blue-400 text-sm">👥 Manage HR Leaders (${db.leaders.length})</h3>
                                 <div class="space-y-2 max-h-48 overflow-y-auto">
-                                    ${db.leaders.map((l, idx) => `
+                                    ${db.leaders.map((l) => `
                                         <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-2">
                                             <div class="flex justify-between items-center">
                                                 <span class="font-bold text-white">${l.name} <span class="text-emerald-400">[${l.committee}]</span></span>
@@ -245,14 +253,16 @@
 
             if (loginRole === 'board') {
                 const boardName = document.getElementById('boardNameInput').value.trim();
-                db.board.name = boardName || "Omar";
+                if (!boardName) { alert('Please enter Board Admin Name'); return; }
+                
+                db.board.name = boardName;
                 if (pass === db.board.pass) {
                     currentUser = { role: 'board', name: db.board.name };
                     currentView = 'dashboard';
                     saveDB();
                     render();
                 } else {
-                    alert('Wrong Board Password! Use: board123');
+                    alert('Wrong Board Password! (Default: board123)');
                 }
             } else {
                 const leaderId = document.getElementById('leaderSelect').value;
@@ -265,6 +275,18 @@
                     alert('Wrong Leader Password!');
                 }
             }
+        }
+
+        function updateBoardSettings() {
+            const name = document.getElementById('updateBoardName').value.trim();
+            const pass = document.getElementById('updateBoardPass').value.trim();
+            if (!name) { alert('Board name cannot be empty'); return; }
+            db.board.name = name;
+            if (pass) db.board.pass = pass;
+            saveDB();
+            currentUser.name = name;
+            alert('Board settings updated successfully!');
+            render();
         }
 
         function addLeader() {
@@ -280,7 +302,6 @@
         }
 
         function deleteLeader(id) {
-            if (db.leaders.length <= 1) { alert('You must keep at least one leader.'); return; }
             if (confirm('Are you sure you want to delete this leader?')) {
                 db.leaders = db.leaders.filter(l => l.id !== id);
                 saveDB();
