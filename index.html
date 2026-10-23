@@ -17,7 +17,6 @@
         .tab-btn { flex: 1; padding: 10px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .tab-btn.active { background: #fbbf24; color: #0f172a; }
         .btn-danger { background: #991b1b; color: #f87171; margin-top: 5px; }
-        .btn-danger:hover { background: #7f1d1d; }
         .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: bold; display: inline-block; }
         .b-warn { background: #451a03; color: #f87171; border: 1px solid #991b1b; }
         .b-bronze { background: #451a03; color: #fb923c; border: 1px solid #c2410c; }
@@ -31,7 +30,8 @@
     <div class="card" id="app"></div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('enactus_english_v1')) || {
+        // Database
+        let db = JSON.parse(localStorage.getItem('enactus_fix_v5')) || {
             board: { name: "Board Admin", pass: "board123" },
             leaders: [],
             members: [],
@@ -51,7 +51,7 @@
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_english_v1', JSON.stringify(db));
+            localStorage.setItem('enactus_fix_v5', JSON.stringify(db));
         }
 
         let loginRole = 'board';
@@ -82,7 +82,7 @@
 
                     ${loginRole === 'board' ? `
                         <label>Board Admin Name:</label>
-                        <input type="text" id="boardNameInput" value="${db.board.name}" placeholder="Enter your name">
+                        <input type="text" id="boardNameInput" value="${db.board.name}">
                     ` : `
                         <label>Select Committee:</label>
                         <select id="commSelect" onchange="updateLeaderDropdown()">
@@ -107,7 +107,7 @@
                         
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
                             <label style="color:#fbbf24;">Board Security Settings:</label>
-                            <input type="text" id="updBoardName" value="${db.board.name}" placeholder="Board Name">
+                            <input type="text" id="updBoardName" value="${db.board.name}">
                             <input type="password" id="updBoardPass" placeholder="New Password (Optional)">
                             <button onclick="updateBoard()">Save Changes</button>
                         </div>
@@ -127,34 +127,3 @@
                             <div style="max-height:140px; overflow-y:auto;">
                                 ${db.members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">No members registered yet.</p>' :
                                     db.members.map(m => {
-                                        const leader = db.leaders.find(l => l.id === m.leaderId) || { committee: 'N/A' };
-                                        const ev = db.evaluations.find(e => e.memberId === m.id);
-                                        const tier = ev ? getTier(ev.totalScore) : null;
-                                        return `
-                                            <div style="background:#1e293b; padding:8px; margin-bottom:6px; border-radius:6px; font-size:12px;">
-                                                <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                                                    <span>${m.name} [${leader.committee}]</span>
-                                                    ${ev ? `<span class="badge ${tier.class}">${tier.emoji} ${tier.name} (${ev.totalScore})</span>` : '<span style="color:#f87171;">Not Evaluated</span>'}
-                                                </div>
-                                            </div>
-                                        `;
-                                    }).join('')}
-                            </div>
-                        </div>
-
-                        <button onclick="logout()" class="btn-danger">Logout</button>
-                    `;
-                } else {
-                    const members = db.members.filter(m => m.leaderId === currentUser.id);
-                    app.innerHTML = `
-                        <h2>Welcome, ${currentUser.name}</h2>
-                        <p class="sub">Committee: ${currentUser.committee}</p>
-
-                        <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
-                            <label style="color:#fbbf24;">Add Committee Member:</label>
-                            <input type="text" id="newMemName" placeholder="Member Name">
-                            <button onclick="addMember()">Add Member</button>
-                        </div>
-
-                        <label style="color:#fbbf24;">My Group Members (${members.length}):</label>
-                        <div style="max-height:180px; overflow-y:auto; margin-bottom:1
