@@ -1,167 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enactus Qena System</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <title>Enactus Qena Evaluation System</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; font-size: 14px; }
+        button { background: #059669; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
+        button:hover { background: #047857; }
+        h2 { text-align: center; color: #34d399; margin-top: 0; }
+        label { font-size: 12px; color: #94a3b8; font-weight: bold; }
+    </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+<body>
+    <div class="box" id="app">
+        <h2>Enactus Qena</h2>
+        <p style="text-align: center; font-size: 12px; color: #64748b; margin-bottom: 20px;">Evaluation & Management System</p>
 
-  <div id="app" class="max-w-xl w-full bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700">
-    <!-- App Container -->
-  </div>
+        <label>Select Role:</label>
+        <select id="role" onchange="toggleRole()">
+            <option value="leader">HR Leader</option>
+            <option value="board">Board Admin</option>
+        </select>
 
-  <script>
-    // Database Initialization
-    let db = JSON.parse(localStorage.getItem('enactus_app_v14')) || {
-      leaders: [
-        { id: "l1", name: "Omar", committee: "PM", pass: "123" }
-      ],
-      members: [],
-      evaluations: [],
-      boardPass: "board123",
-      personalCriteria: [
-        { name: "Commitment & Attendance", max: 5 },
-        { name: "Task Responsibility", max: 5 },
-        { name: "Teamwork", max: 5 },
-        { name: "Communication", max: 5 }
-      ],
-      techCriteria: {
-        PM: [
-          { name: "Problem Solving", max: 30 },
-          { name: "Project Planning", max: 30 }
-        ],
-        PR: [
-          { name: "Negotiation", max: 30 },
-          { name: "Sponsorship", max: 30 }
-        ]
-      }
-    };
+        <div id="leaderDiv">
+            <label>Select Committee:</label>
+            <select id="comm">
+                <option value="PM">PM</option>
+                <option value="PR">PR</option>
+                <option value="HR">HR</option>
+                <option value="Media">Media</option>
+                <option value="Presentation">Presentation</option>
+                <option value="OC">OC</option>
+            </select>
 
-    function save() {
-      localStorage.setItem('enactus_app_v14', JSON.stringify(db));
-    }
+            <label>Leader Name:</label>
+            <input type="text" id="leaderName" placeholder="Enter your name">
+        </div>
 
-    let currentView = 'login';
-    let loginRole = 'leader';
-    let activeUser = null;
-    let selectedMember = null;
+        <label>Password:</label>
+        <input type="password" id="pass" placeholder="Enter password">
 
-    function render() {
-      const app = document.getElementById('app');
+        <button onclick="login()">Sign In</button>
+    </div>
 
-      if (currentView === 'login') {
-        app.innerHTML = `
-          <h1 class="text-2xl font-bold text-emerald-400 text-center mb-2">Enactus Qena</h1>
-          <p class="text-xs text-slate-400 text-center mb-6">Evaluation Platform</p>
+    <script>
+        function toggleRole() {
+            const role = document.getElementById('role').value;
+            document.getElementById('leaderDiv').style.display = role === 'board' ? 'none' : 'block';
+        }
 
-          <div class="grid grid-cols-2 bg-slate-900 p-1 rounded-xl mb-4 text-xs font-bold border border-slate-700">
-            <button onclick="setRole('leader')" class="py-2 rounded-lg ${loginRole === 'leader' ? 'bg-emerald-600 text-white' : 'text-slate-400'}">HR Leader</button>
-            <button onclick="setRole('board')" class="py-2 rounded-lg ${loginRole === 'board' ? 'bg-emerald-600 text-white' : 'text-slate-400'}">Board Admin</button>
-          </div>
+        function login() {
+            const role = document.getElementById('role').value;
+            const pass = document.getElementById('pass').value;
 
-          ${loginRole === 'leader' ? `
-            <div class="space-y-3 text-xs">
-              <label class="block text-slate-300">Select Committee:</label>
-              <select id="commBox" onchange="updateLeadersList()" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded text-white">
-                ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
-              </select>
-
-              <label class="block text-slate-300">Select Leader Name:</label>
-              <select id="leaderBox" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded text-white">
-                <!-- Filled by JS -->
-              </select>
-            </div>
-          ` : `
-            <div class="space-y-3 text-xs">
-              <label class="block text-slate-300">Board Administrator</label>
-              <input type="text" disabled value="Enactus Board" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded text-slate-400" />
-            </div>
-          `}
-
-          <div class="space-y-3 text-xs mt-3">
-            <label class="block text-slate-300">Password:</label>
-            <input type="password" id="passBox" placeholder="Password (Default: 123 or board123)" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded text-white" />
-            
-            <button onclick="doLogin()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3 rounded-xl mt-2 text-sm shadow">Sign In</button>
-          </div>
-        `;
-        if (loginRole === 'leader') updateLeadersList();
-      } 
-      else if (currentView === 'dashboard') {
-        const myMembers = activeUser.role === 'hr' ? db.members.filter(m => m.leaderId === activeUser.id) : db.members;
-
-        app.innerHTML = `
-          <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
-            <div>
-              <h2 class="font-bold text-emerald-400">${activeUser.name}</h2>
-              <p class="text-[11px] text-slate-400">${activeUser.role === 'hr' ? 'Committee: ' + activeUser.committee : 'Board Admin'}</p>
-            </div>
-            <button onclick="logout()" class="bg-red-900/50 text-red-300 px-3 py-1 rounded text-xs font-bold">Logout</button>
-          </div>
-
-          ${activeUser.role === 'hr' ? `
-            <div class="space-y-4 text-xs">
-              <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
-                <h3 class="font-bold text-emerald-400">👥 My Group Members (${myMembers.length})</h3>
-                <div class="flex gap-2">
-                  <input type="text" id="memNameInput" placeholder="Member Full Name" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-white" />
-                  <button onclick="addMember()" class="bg-emerald-600 px-4 py-2 font-bold rounded">Add</button>
-                </div>
-              </div>
-
-              <div class="space-y-2 max-h-48 overflow-y-auto">
-                ${myMembers.length === 0 ? '<p class="text-center text-slate-500 py-4">No members added yet.</p>' :
-                  myMembers.map(m => `
-                    <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-700 flex justify-between items-center">
-                      <span class="font-bold">${m.name}</span>
-                      <div class="flex gap-1">
-                        <button onclick="startEval('${m.id}')" class="bg-emerald-600/50 text-emerald-300 px-2.5 py-1 rounded font-bold">Evaluate & SWOT</button>
-                        <button onclick="deleteMember('${m.id}')" class="bg-red-900/50 text-red-300 px-2 py-1 rounded font-bold">X</button>
-                      </div>
-                    </div>
-                  `).join('')}
-              </div>
-            </div>
-          ` : `
-            <div class="space-y-4 text-xs">
-              <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2">
-                <h3 class="font-bold text-amber-400">➕ Add New HR Leader</h3>
-                <input type="text" id="lName" placeholder="Leader Name" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-white" />
-                <input type="text" id="lComm" placeholder="Committee (PM, PR...)" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-white uppercase" />
-                <input type="password" id="lPass" placeholder="Password" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-white" />
-                <button onclick="addLeader()" class="w-full bg-amber-500 text-slate-950 font-bold py-2 rounded">Add Leader</button>
-              </div>
-            </div>
-          `}
-        `;
-      }
-      else if (currentView === 'eval') {
-        const comm = activeUser.committee;
-        const tech = db.techCriteria[comm] || [];
-
-        app.innerHTML = `
-          <div class="space-y-4 text-xs">
-            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-              <h2 class="font-bold text-emerald-400">Evaluation: ${selectedMember.name}</h2>
-              <button onclick="currentView='dashboard'; render();" class="bg-slate-700 px-3 py-1 rounded">Back</button>
-            </div>
-
-            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
-              <h3 class="font-bold text-emerald-400">Personal Criteria</h3>
-              ${db.personalCriteria.map((c, i) => `
-                <div class="flex justify-between items-center">
-                  <span>${c.name} (Max: ${c.max})</span>
-                  <input type="number" id="p_${i}" value="${c.max}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded font-bold text-emerald-400" />
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
-              <h3 class="font-bold text-sky-400">Technical Criteria (${comm})</h3>${tech.map((c, i) => `
-                <div class="flex justify-between items-center">
-                  <span>${c.name} (Max: ${c.max})</span>
-                  <input type="number" id="t_${i}" value="${c.max}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded font-bold text-sky-400" />
-                </div>
-              `).join('')
+            if (role === 'board') {
+                if (pass === 'board123') {
+                    alert('Board Admin Logged In Successfully!');
+                } else {
+                    alert('Wrong Board Password! (Use: board123)');
+                }
+            } else {
+                const name = document.getElementById('leaderName').value.trim();
+                if (!name) {
+                    alert('Please enter your leader name.');
+                    return;
+                }
+                alert(`Welcome ${name}! Logged in successfully.`);
+            }
+        }
+    </script>
+</body>
+</html>
