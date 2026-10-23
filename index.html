@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena - Advanced Evaluation System</title>
+    <title>Enactus Qena - Evaluation System</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -29,7 +29,6 @@
         .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
         .nav-header h3 { margin: 0; color: var(--accent); }
         .btn-logout { background: var(--danger); color: white; width: auto; padding: 8px 16px; font-size: 13px; }
-        .btn-logout:hover { background: #dc2626; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { color: var(--accent); }
@@ -39,77 +38,102 @@
         .tier-silver { background: #334155; color: #cbd5e1; }
         .tier-gold { background: #713f12; color: #fde047; }
         .tier-best { background: #065f46; color: #34d399; }
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-buttons button { background: #334155; color: #fff; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-buttons button { background: #334155; color: #fff; flex: 1; }
         .tab-buttons button.active { background: var(--accent); color: var(--bg-main); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- 1. First Setup / Login Screen -->
+        <!-- 1. Authentication / Setup Screen -->
         <div id="authScreen" class="card">
             <h2 id="authTitle">Enactus Qena System</h2>
-            <p class="sub" id="authSubtitle">Loading system configuration...</p>
+            <p class="sub" id="authSubtitle">Loading system...</p>
             
-            <div id="setupForm" class="hidden">
-                <label>Create Board Admin Username:</label>
-                <input type="text" id="setupUser" placeholder="e.g. admin">
-                <label>Create Board Admin Password:</label>
-                <input type="password" id="setupPass" placeholder="Enter secure password">
-                <button onclick="registerFirstAdmin()">Initialize Board Admin</button>
+            <!-- First-time Board Registration -->
+            <div id="registerBoardForm" class="hidden">
+                <p style="color: var(--accent); text-align: center; font-size: 13px; margin-bottom: 15px;">Welcome! Please create the primary Board Admin account to initialize the system.</p>
+                <label>Your Name (Board Admin):</label>
+                <input type="text" id="regBoardName" placeholder="e.g. Omar Abdel-Aati">
+                <label>Username:</label>
+                <input type="text" id="regBoardUser" placeholder="Choose a username">
+                <label>Password:</label>
+                <input type="password" id="regBoardPass" placeholder="Choose a secure password">
+                <button onclick="registerBoard()">Create Board Account</button>
             </div>
 
+            <!-- Standard Login (For Board or HR Leaders) -->
             <div id="loginForm" class="hidden">
-                <label>Username / Role ID:</label>
+                <label>Username:</label>
                 <input type="text" id="loginUser" placeholder="Enter your username">
                 <label>Password:</label>
                 <input type="password" id="loginPass" placeholder="Enter your password">
-                <button onclick="handleLogin()">Login to System</button>
+                <button onclick="handleLogin()">Login to Portal</button>
             </div>
         </div>
 
         <!-- 2. Board Admin Dashboard -->
         <div id="adminDashboard" class="card hidden">
             <div class="nav-header">
-                <h3>Board Admin Control Panel</h3>
+                <h3 id="adminWelcomeTitle">Board Admin Dashboard</h3>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
             <div class="tab-buttons">
                 <button id="tabBtnLeaders" class="active" onclick="switchAdminTab('leaders')">Manage HR Leaders</button>
-                <button id="tabBtnEvals" onclick="switchAdminTab('evals')">All Evaluations & SWOT</button>
                 <button id="tabBtnCriteria" onclick="switchAdminTab('criteria')">Evaluation Criteria</button>
+                <button id="tabBtnEvals" onclick="switchAdminTab('evals')">All Evaluations & SWOT</button>
             </div>
 
             <!-- Manage Leaders Tab -->
             <div id="adminSectionLeaders">
-                <h4 style="color:var(--accent); margin-top:0;">Add New HR Leader</h4>
+                <h4 style="color:var(--accent); margin-top:0;">Add HR Leader Account</h4>
+                <label>Leader Name:</label>
+                <input type="text" id="newLeaderName" placeholder="e.g. Mohamed Ali">
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="newLeaderName" placeholder="Leader Name" style="margin-bottom:10px;">
-                    <input type="text" id="newLeaderUser" placeholder="Username" style="margin-bottom:10px;">
+                    <div style="flex:1;"><label>Username:</label><input type="text" id="newLeaderUser" placeholder="Username"></div>
+                    <div style="flex:1;"><label>Password:</label><input type="password" id="newLeaderPass" placeholder="Password"></div>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <input type="password" id="newLeaderPass" placeholder="Password" style="margin-bottom:10px;">
-                    <select id="newLeaderCommittee" style="margin-bottom:10px;">
-                        <option value="Project Management">Project Management</option>
-                        <option value="HR">Human Resources</option>
-                        <option value="Media">Media & Marketing</option>
-                        <option value="Fundraising">Fundraising</option>
-                    </select>
-                </div>
-                <button onclick="addLeader()">Add HR Leader Account</button>
+                <label>Assigned Committee:</label>
+                <select id="newLeaderCommittee">
+                    <option value="Project Management">Project Management</option>
+                    <option value="HR">Human Resources</option>
+                    <option value="Media">Media & Marketing</option>
+                    <option value="Fundraising">Fundraising</option>
+                    <option value="PR & Presentation">PR & Presentation</option>
+                </select>
+                <button onclick="addLeader()">Create & Assign HR Leader</button>
 
-                <h4 style="margin-top:20px;">Active HR Leaders</h4>
+                <h4 style="margin-top:25px;">Active HR Leaders</h4>
                 <table>
                     <thead><tr><th>Name</th><th>Username</th><th>Committee</th><th>Action</th></tr></thead>
                     <tbody id="leadersTableBody"></tbody>
                 </table>
             </div>
 
-            <!-- All Evaluations Tab -->
+            <!-- Criteria Management Tab -->
+            <div id="adminSectionCriteria" class="hidden">
+                <h4 style="color:var(--accent); margin-top:0;">Manage Evaluation Criteria & Max Scores</h4>
+                <p style="font-size:13px; color:var(--text-sub);">Add, remove, or modify criteria and their maximum grades.</p>
+                
+                <div style="background:#0f172a; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid var(--border-color);">
+                    <h5 style="margin:0 0 10px 0; color:var(--accent);">Add New Criterion</h5>
+                    <input type="text" id="newCritName" placeholder="Criterion Name (e.g. Task Quality)" style="margin-bottom:8px;">
+                    <input type="number" id="newCritMax" placeholder="Max Score (e.g. 30)" style="margin-bottom:8px;">
+                    <button onclick="addCriterion()">Add Criterion</button>
+                </div>
+
+                <table>
+                    <thead><tr><th>Criterion Name</th><th>Max Score</th><th>Action</th></tr></thead>
+                    <tbody id="criteriaTableBody"></tbody>
+                </table>
+                <p id="totalCriteriaMaxText" style="margin-top:10px; font-weight:bold; font-size:13px;"></p>
+            </div>
+
+            <!-- All Evaluations & SWOT Tab -->
             <div id="adminSectionEvals" class="hidden">
-                <h4 style="color:var(--accent); margin-top:0;">All Members Evaluations & SWOT Analysis</h4>
+                <h4 style="color:var(--accent); margin-top:0;">All Member Evaluations & SWOT Analysis</h4>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -117,23 +141,15 @@
                                 <th>Member</th>
                                 <th>Committee</th>
                                 <th>Leader</th>
-                                <th>Total</th>
+                                <th>Total Score</th>
                                 <th>Tier</th>
-                                <th>SWOT Summary</th>
+                                <th>SWOT Details</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="adminEvalsTableBody"></tbody>
                     </table>
                 </div>
-            </div>
-
-            <!-- Criteria Tab -->
-            <div id="adminSectionCriteria" class="hidden">
-                <h4 style="color:var(--accent); margin-top:0;">Evaluation Criteria & Weights Configuration</h4>
-                <p style="font-size:13px; color:var(--text-sub);">Customize grading parameters and maximum scores.</p>
-                <div id="criteriaListContainer"></div>
-                <button onclick="saveCriteriaConfig()">Save Criteria Changes</button>
             </div>
         </div>
 
@@ -150,29 +166,29 @@
             <h4 style="color:var(--accent); margin-top:0;">Evaluate Committee Member</h4>
             
             <label>Member Full Name:</label>
-            <input type="text" id="evalMemberName" placeholder="e.g. Ahmed Mohamed">
+            <input type="text" id="evalMemberName" placeholder="e.g. Ahmed Mahmoud">
 
-            <div id="dynamicCriteriaInputs">
-                <!-- Dynamic Criteria Generated Here -->
+            <div id="leaderCriteriaInputsContainer">
+                <!-- Dynamic criteria inputs generated automatically based on Admin settings -->
             </div>
 
             <label>SWOT Analysis (Strengths, Weaknesses, Opportunities, Threats):</label>
-            <textarea id="evalSwot" rows="3" placeholder="Write comprehensive SWOT insights..."></textarea>
+            <textarea id="evalSwot" rows="3" placeholder="Write structured SWOT insights..."></textarea>
 
-            <button onclick="submitMemberEvaluation()">Save & Submit Evaluation</button>
+            <button onclick="submitEvaluation()">Save & Submit Member Evaluation</button>
 
-            <h4 style="margin-top:25px;">Submitted Evaluations For My Committee</h4>
+            <h4 style="margin-top:25px;">My Committee Submissions</h4>
             <table>
-                <thead><tr><th>Member</th><th>Total Score</th><th>Tier</th><th>Action</th></tr></thead>
+                <thead><tr><th>Member Name</th><th>Total Score</th><th>Tier</th><th>Action</th></tr></thead>
                 <tbody id="leaderEvalsTableBody"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // Default System Data Initialization
-        let db = JSON.parse(localStorage.getItem('enactus_db') || JSON.stringify({
-            admin: null,
+        // System Database Initialization
+        let db = JSON.parse(localStorage.getItem('enactus_system_db') || JSON.stringify({
+            board: null,
             leaders: [],
             criteria: [
                 { name: "Task Completion & Quality", max: 40 },
@@ -189,27 +205,32 @@
         };
 
         function checkSystemState() {
-            if (!db.admin) {
-                document.getElementById('authTitle').innerText = 'System Setup';
-                document.getElementById('authSubtitle').innerText = 'Create the primary Board Admin account to get started.';
-                document.getElementById('setupForm').classList.remove('hidden');
+            if (!db.board) {
+                document.getElementById('authTitle').innerText = 'System Setup & Registration';
+                document.getElementById('authSubtitle').innerText = 'First-time setup: Register the Board Admin account.';
+                document.getElementById('registerBoardForm').classList.remove('hidden');
                 document.getElementById('loginForm').classList.add('hidden');
             } else {
                 document.getElementById('authTitle').innerText = 'Enactus Qena Login';
                 document.getElementById('authSubtitle').innerText = 'Enter your credentials to access your portal.';
-                document.getElementById('setupForm').classList.add('hidden');
+                document.getElementById('registerBoardForm').classList.add('hidden');
                 document.getElementById('loginForm').classList.remove('hidden');
             }
         }
 
-        function registerFirstAdmin() {
-            const user = document.getElementById('setupUser').value.trim();
-            const pass = document.getElementById('setupPass').value.trim();
-            if(!user || !pass) { alert('Please fill in both fields.'); return; }
-            
-            db.admin = { username: user, password: pass };
-            localStorage.setItem('enactus_db', JSON.stringify(db));
-            alert('Board Admin created successfully! Please log in.');
+        function registerBoard() {
+            const name = document.getElementById('regBoardName').value.trim();
+            const username = document.getElementById('regBoardUser').value.trim();
+            const password = document.getElementById('regBoardPass').value.trim();
+
+            if(!name || !username || !password) {
+                alert('Please fill in all fields to create your board account.');
+                return;
+            }
+
+            db.board = { name, username, password };
+            localStorage.setItem('enactus_system_db', JSON.stringify(db));
+            alert('Board Admin account created successfully! Please log in.');
             checkSystemState();
         }
 
@@ -217,8 +238,8 @@
             const user = document.getElementById('loginUser').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
 
-            if(db.admin && user === db.admin.username && pass === db.admin.password) {
-                currentUser = { role: 'admin', name: 'Board Admin' };
+            if(db.board && user === db.board.username && pass === db.board.password) {
+                currentUser = { role: 'board', name: db.board.name };
                 launchAdminDashboard();
                 return;
             }
@@ -239,217 +260,4 @@
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('leaderDashboard').classList.add('hidden');
             document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
-            checkSystemState();
-        }
-
-        // --- Admin Functions ---
-        function launchAdminDashboard() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.remove('hidden');
-            renderLeadersTable();
-            renderAdminEvalsTable();
-            renderCriteriaConfig();
-        }
-
-        function switchAdminTab(tab) {
-            document.getElementById('tabBtnLeaders').classList.remove('active');
-            document.getElementById('tabBtnEvals').classList.remove('active');
-            document.getElementById('tabBtnCriteria').classList.remove('active');
-
-            document.getElementById('adminSectionLeaders').classList.add('hidden');
-            document.getElementById('adminSectionEvals').classList.add('hidden');
-            document.getElementById('adminSectionCriteria').classList.add('hidden');
-
-            if(tab === 'leaders') {
-                document.getElementById('tabBtnLeaders').classList.add('active');
-                document.getElementById('adminSectionLeaders').classList.remove('hidden');
-            } else if(tab === 'evals') {
-                document.getElementById('tabBtnEvals').classList.add('active');
-                document.getElementById('adminSectionEvals').classList.remove('hidden');
-                renderAdminEvalsTable();
-            } else if(tab === 'criteria') {
-                document.getElementById('tabBtnCriteria').classList.add('active');
-                document.getElementById('adminSectionCriteria').classList.remove('hidden');
-            }
-        }
-
-        function addLeader() {
-            const name = document.getElementById('newLeaderName').value.trim();
-            const user = document.getElementById('newLeaderUser').value.trim();
-            const pass = document.getElementById('newLeaderPass').value.trim();
-            const committee = document.getElementById('newLeaderCommittee').value;
-
-            if(!name || !user || !pass) { alert('Please fill all leader fields.'); return; }
-            if(db.leaders.some(l => l.username === user)) { alert('Username already exists!'); return; }
-
-            db.leaders.push({ name, username: user, password: pass, committee });
-            localStorage.setItem('enactus_db', JSON.stringify(db));
-
-            document.getElementById('newLeaderName').value = '';
-            document.getElementById('newLeaderUser').value = '';
-            document.getElementById('newLeaderPass').value = '';
-            renderLeadersTable();
-            alert('HR Leader account created successfully!');
-        }
-
-        function renderLeadersTable() {
-            const tbody = document.getElementById('leadersTableBody');
-            tbody.innerHTML = '';
-            if(db.leaders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-sub);">No HR leaders added yet.</td></tr>';
-                return;
-            }
-            db.leaders.forEach((l, idx) => {
-                tbody.innerHTML += `<tr><td>${l.name}</td><td>${l.username}</td><td>${l.committee}</td><td><button onclick="deleteLeader(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td></tr>`;
-            });
-        }
-
-        function deleteLeader(idx) {
-            db.leaders.splice(idx, 1);
-            localStorage.setItem('enactus_db', JSON.stringify(db));
-            renderLeadersTable();
-        }
-
-        function renderAdminEvalsTable() {
-            const tbody = document.getElementById('adminEvalsTableBody');
-            tbody.innerHTML = '';
-            if(db.evaluations.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-sub);">No evaluations recorded yet.</td></tr>';
-                return;
-            }
-            db.evaluations.forEach((e, idx) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${e.memberName}</b></td>
-                        <td>${e.committee}</td>
-                        <td>${e.leaderName}</td>
-                        <td>${e.totalScore} / 100</td>
-                        <td><span class="badge ${e.tierClass}">${e.tier}</span></td>
-                        <td style="font-size:12px; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${e.swot}">${e.swot || 'No SWOT'}</td>
-                        <td><button onclick="deleteEval(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td>
-                    </tr>`;
-            });
-        }
-
-        function deleteEval(idx) {
-            db.evaluations.splice(idx, 1);
-            localStorage.setItem('enactus_db', JSON.stringify(db));
-            renderAdminEvalsTable();
-        }
-
-        function renderCriteriaConfig() {
-            const container = document.getElementById('criteriaListContainer');
-            container.innerHTML = '';
-            db.criteria.forEach((c, idx) => {
-                container.innerHTML += `
-                    <div style="display:flex; gap:10px; margin-bottom:10px;">
-                        <input type="text" id="critName_${idx}" value="${c.name}" style="flex:2; margin-bottom:0;">
-                        <input type="number" id="critMax_${idx}" value="${c.max}" style="flex:1; margin-bottom:0;" placeholder="Max Score">
-                    </div>`;
-            });
-        }
-
-        function saveCriteriaConfig() {
-            let updated = [];
-            let totalMax = 0;
-            for(let i=0; i<db.criteria.length; i++) {
-                const name = document.getElementById(`critName_${i}`).value.trim();
-                const max = parseInt(document.getElementById(`critMax_${i}`).value) || 0;
-                updated.push({ name, max });
-                totalMax += max;
-            }
-            if(totalMax !== 100) {
-                alert(`Warning: Total criteria max score is ${totalMax}. It is recommended to make total sum equal to 100.`);
-            }
-            db.criteria = updated;
-            localStorage.setItem('enactus_db', JSON.stringify(db));
-            alert('Criteria updated successfully!');
-        }
-
-        // --- Leader Functions ---
-        function launchLeaderDashboard() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('leaderDashboard').classList.remove('hidden');
-            document.getElementById('leaderDashTitle').innerText = `${currentUser.name} Portal`;
-            document.getElementById('leaderSubInfo').innerText = `Committee: ${currentUser.committee}`;
-            renderLeaderCriteriaInputs();
-            renderLeaderEvalsTable();
-        }
-
-        function renderLeaderCriteriaInputs() {
-            const container = document.getElementById('dynamicCriteriaInputs');
-            container.innerHTML = '';
-            db.criteria.forEach((c, idx) => {
-                container.innerHTML += `
-                    <label>${c.name} (Max: ${c.max}):</label>
-                    <input type="number" id="scoreInput_${idx}" min="0" max="${c.max}" placeholder="Score out of ${c.max}">`;
-            });
-        }
-
-        function submitMemberEvaluation() {
-            const memberName = document.getElementById('evalMemberName').value.trim();
-            const swot = document.getElementById('evalSwot').value.trim();
-            if(!memberName) { alert('Please enter member name.'); return; }
-
-            let totalScore = 0;
-            let scores = [];
-            for(let i=0; i<db.criteria.length; i++) {
-                const val = parseInt(document.getElementById(`scoreInput_${i}`).value) || 0;
-                if(val > db.criteria[i].max) {
-                    alert(`Score for "${db.criteria[i].name}" cannot exceed its maximum (${db.criteria[i].max}).`);
-                    return;
-                }
-                totalScore += val;
-                scores.push(val);
-            }
-
-            // Tier Calculation based on requested ranges
-            let tier = 'Warning';
-            let tierClass = 'tier-warning';
-            if (totalScore >= 95) { tier = 'Best'; tierClass = 'tier-best'; }
-            else if (totalScore >= 85) { tier = 'Gold'; tierClass = 'tier-gold'; }
-            else if (totalScore >= 65) { tier = 'Silver'; tierClass = 'tier-silver'; }
-            else if (totalScore >= 55) { tier = 'Bronze'; tierClass = 'tier-bronze'; }
-
-            db.evaluations.push({
-                memberName,
-                committee: currentUser.committee,
-                leaderName: currentUser.name,
-                totalScore,
-                tier,
-                tierClass,
-                swot,
-                scores,
-                date: new Date().toLocaleDateString()
-            });
-
-            localStorage.setItem('enactus_db', JSON.stringify(db));
-            alert('Evaluation saved successfully!');
-            document.getElementById('evalMemberName').value = '';
-            document.getElementById('evalSwot').value = '';
-            db.criteria.forEach((_, idx) => { document.getElementById(`scoreInput_${idx}`).value = ''; });
-            renderLeaderEvalsTable();
-        }
-
-        function renderLeaderEvalsTable() {
-            const tbody = document.getElementById('leaderEvalsTableBody');
-            tbody.innerHTML = '';
-            const myEvals = db.evaluations.filter(e => e.leaderName === currentUser.name);
-            if(myEvals.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-sub);">No evaluations submitted yet.</td></tr>';
-                return;
-            }
-            myEvals.forEach((e) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${e.memberName}</b></td>
-                        <td>${e.totalScore} / 100</td>
-                        <td><span class="badge ${e.tierClass}">${e.tier}</span></td>
-                        <td><span style="font-size:11px; color:var(--text-sub);">Saved</span></td>
-                    </tr>`;
-            });
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('loginPass
