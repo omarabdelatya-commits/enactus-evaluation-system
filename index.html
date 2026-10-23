@@ -52,9 +52,11 @@
             <h2 id="authTitle">Enactus Qena Portal</h2>
             <p class="sub" id="authSubtitle">Loading system configuration...</p>
 
-            <!-- Board Master Registration (Appears ONLY for the first creator) -->
+            <!-- Board Master Registration (Appears ONLY for the primary owner) -->
             <div id="registerBoardForm" class="hidden">
-                <p style="color: var(--accent); font-size: 13px; text-align: center;">Welcome Owner! Register your Master Board Admin account. Once created, no one else can register as admin.</p>
+                <p style="color: var(--accent); font-size: 13px; text-align: center; margin-bottom: 15px;">
+                    Welcome! Register your Master Board Admin account to take full system control. Once created, registration will be permanently disabled.
+                </p>
                 <label>Your Full Name:</label>
                 <input type="text" id="regBoardName" placeholder="e.g. Omar Abdel-Aati">
                 <label>Choose Admin Username:</label>
@@ -64,7 +66,7 @@
                 <button onclick="registerMasterBoard()">Create Master Admin Account</button>
             </div>
 
-            <!-- Login Form (Standard for Everyone Else) -->
+            <!-- Login Form (Standard for Everyone) -->
             <div id="loginForm" class="hidden">
                 <label>Username:</label>
                 <input type="text" id="loginUser" placeholder="Enter username">
@@ -203,9 +205,8 @@
     </div>
 
     <script>
-        // Synchronized Database Structure
-        let db = JSON.parse(localStorage.getItem('enactus_app_master_v1') || JSON.stringify({
-            masterBoard: null, // { name, username, password }
+        let db = JSON.parse(localStorage.getItem('enactus_app_master_v2') || JSON.stringify({
+            masterBoard: null,
             leaders: [],
             members: [],
             criteria: [
@@ -219,10 +220,10 @@
         let currentUser = null;
 
         window.onload = function() {
-            checkState();
+            checkSystemState();
         };
 
-        function checkState() {
+        function checkSystemState() {
             if (!db.masterBoard) {
                 document.getElementById('authTitle').innerText = 'Owner First-Time Registration';
                 document.getElementById('authSubtitle').innerText = 'Create your Master Board Admin account to lock the system.';
@@ -247,9 +248,9 @@
             }
 
             db.masterBoard = { name, username, password };
-            localStorage.setItem('enactus_app_master_v1', JSON.stringify(db));
+            localStorage.setItem('enactus_app_master_v2', JSON.stringify(db));
             alert('Master Admin Account created successfully! System is now locked to your ownership.');
-            checkState();
+            checkSystemState();
         }
 
         function handleLogin() {
@@ -279,7 +280,7 @@
             document.getElementById('leaderDashboard').classList.add('hidden');
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
-            checkState();
+            checkSystemState();
         }
 
         // --- Admin Functions ---
@@ -330,24 +331,4 @@
                 alert('Please fill all fields.');
                 return;
             }
-            if(username === db.masterBoard.username || db.leaders.some(l => l.username === username)) {
-                alert('Username already in use!');
-                return;
-            }
-
-            db.leaders.push({ name, username, password, committee });
-            localStorage.setItem('enactus_app_master_v1', JSON.stringify(db));
-
-            document.getElementById('newLeaderName').value = '';
-            document.getElementById('newLeaderUser').value = '';
-            document.getElementById('newLeaderPass').value = '';
-            document.getElementById('newLeaderCommittee').value = '';
-            renderLeadersTable();
-            alert('HR Leader account created successfully!');
-        }
-
-        function renderLeadersTable() {
-            const tbody = document.getElementById('leadersTableBody');
-            tbody.innerHTML = '';
-            if(db.leaders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="
+            if(username === db.masterBoard.username || db.leaders.some(l => l.username
