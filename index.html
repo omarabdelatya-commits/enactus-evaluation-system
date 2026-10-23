@@ -3,72 +3,427 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena Evaluation</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: #fbbf24; margin-top: 0; }
-        label { display: block; margin-top: 15px; font-size: 13px; font-weight: bold; color: #cbd5e1; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; margin-top: 20px; background: #fbbf24; color: #0f172a; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-        button:hover { background: #f59e0b; }
-        .success { text-align: center; color: #34d399; font-size: 18px; font-weight: bold; }
-    </style>
+    <title>Enactus Qena Evaluation System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="box" id="app">
-        <h2>Enactus Qena</h2>
-        <p style="text-align: center; color: #94a3b8; font-size: 13px;">System Check</p>
-
-        <label>Select Role:</label>
-        <select id="role" onchange="toggleRole()">
-            <option value="board">Board Admin</option>
-            <option value="leader">HR Leader</option>
-        </select>
-
-        <div id="boardBox">
-            <label>Board Admin Name:</label>
-            <input type="text" id="bName" value="Board Admin">
-        </div>
-
-        <div id="leaderBox" style="display:none;">
-            <label>HR Leader Name:</label>
-            <input type="text" id="lName" value="Omar Leader">
-        </div>
-
-        <label>Password:</label>
-        <input type="password" id="pass" placeholder="Enter password (board123)">
-
-        <button onclick="doLogin()">Sign In</button>
+    <div id="app" class="max-w-xl w-full bg-slate-800 rounded-2xl shadow-2xl p-6 border border-slate-700">
+        <!-- Dynamic App Container -->
     </div>
 
     <script>
-        function toggleRole() {
-            var role = document.getElementById('role').value;
-            if(role === 'board') {
-                document.getElementById('boardBox').style.display = 'block';
-                document.getElementById('leaderBox').style.display = 'none';
-            } else {
-                document.getElementById('boardBox').style.display = 'none';
-                document.getElementById('leaderBox').style.display = 'block';
+        // Database Initialization
+        let db = JSON.parse(localStorage.getItem('enactus_final_pro_v1')) || {
+            board: { name: "Board Admin", pass: "board123" },
+            leaders: [],
+            members: [],
+            evaluations: [],
+            personalCriteria: [
+                { name: "Commitment & Attendance", max: 5 },
+                { name: "Task Responsibility", max: 5 },
+                { name: "Teamwork & Cooperation", max: 5 },
+                { name: "Communication", max: 5 }
+            ],
+            techCriteria: {
+                PM: [{ name: "Problem Solving", max: 30 }, { name: "Project Planning", max: 30 }],
+                PR: [{ name: "Negotiation", max: 30 }, { name: "Sponsorship", max: 30 }],
+                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }],
+                Media: [{ name: "Design Quality", max: 30 }, { name: "Content Creation", max: 30 }],
+                Presentation: [{ name: "Public Speaking", max: 30 }, { name: "Slide Design", max: 30 }],
+                OC: [{ name: "Logistics", max: 30 }, { name: "Execution", max: 30 }]
+            }
+        };
+
+        function saveDB() {
+            localStorage.setItem('enactus_final_pro_v1', JSON.stringify(db));
+        }
+
+        let currentView = 'login';
+        let loginRole = 'leader';
+        let currentUser = null;
+        let activeMember = null;
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (currentView === 'login') {
+                app.innerHTML = `
+                    <div class="text-center mb-6">
+                        <h1 class="text-2xl font-extrabold text-amber-400">Enactus Qena</h1>
+                        <p class="text-xs text-slate-400">Evaluation System Login</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 bg-slate-900 p-1 rounded-xl mb-6 text-xs font-bold border border-slate-700">
+                        <button onclick="setLoginRole('leader')" class="py-2.5 rounded-lg transition ${loginRole === 'leader' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400'}">HR Leader</button>
+                        <button onclick="setLoginRole('board')" class="py-2.5 rounded-lg transition ${loginRole === 'board' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400'}">Board Admin</button>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        ${loginRole === 'leader' ? `
+                            <div>
+                                <label class="block text-slate-300 font-bold mb-1">Select Committee:</label>
+                                <select id="commSelect" onchange="updateLeaderDropdown()" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium">
+                                    ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-300 font-bold mb-1">Select HR Leader Name:</label>
+                                <select id="leaderSelect" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-medium">
+                                    <!-- Dynamic -->
+                                </select>
+                            </div>
+                        ` : `
+                            <div>
+                                <label class="block text-slate-300 font-bold mb-1">Board Admin Name</label>
+                                <input type="text" id="boardNameInput" placeholder="Enter your name" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold" />
+                            </div>
+                        `}
+
+                        <div>
+                            <label class="block text-slate-300 font-bold mb-1">Password:</label>
+                            <input type="password" id="passInput" placeholder="••••••••" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white" />
+                        </div>
+
+                        <button onclick="handleLogin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3.5 rounded-xl shadow text-sm transition mt-2">Sign In</button>
+                    </div>
+                `;
+                if (loginRole === 'leader') updateLeaderDropdown();
+            } 
+            else if (currentView === 'dashboard') {
+                const members = currentUser.role === 'hr' ? db.members.filter(m => m.leaderId === currentUser.id) : db.members;
+
+                app.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-4 mb-6">
+                        <div>
+                            <h2 class="font-bold text-amber-400 text-base">${currentUser.name}</h2>
+                            <p class="text-xs text-slate-400">${currentUser.role === 'hr' ? 'Committee: ' + currentUser.committee : 'Board Administration (Full Access)'}</p>
+                        </div>
+                        <button onclick="logout()" class="bg-red-900/50 text-red-300 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-900">Logout</button>
+                    </div>
+
+                    ${currentUser.role === 'hr' ? `
+                        <div class="space-y-4 text-xs">
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                                <h3 class="font-bold text-amber-400 text-sm">👥 My Group Members (${members.length})</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" id="newMemName" placeholder="Enter Member Name" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                                    <button onclick="addMember()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 font-bold rounded-lg">Add</button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 max-h-60 overflow-y-auto">
+                                ${members.length === 0 ? '<p class="text-center text-slate-500 py-6">No members added yet.</p>' :
+                                    members.map(m => {
+                                        const hasEval = db.evaluations.some(e => e.memberId === m.id);
+                                        return `
+                                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                                                <div>
+                                                    <span class="font-bold text-white text-sm">${m.name}</span>
+                                                    <span class="ml-2 text-[10px] px-2 py-0.5 rounded ${hasEval ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${hasEval ? 'Evaluated' : 'Not Evaluated'}</span>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <button onclick="openEval('${m.id}')" class="bg-amber-500/30 text-amber-300 px-3 py-1 rounded font-bold hover:bg-amber-500 hover:text-slate-950 transition">Evaluate & Notes</button>
+                                                    <button onclick="deleteMember('${m.id}')" class="bg-red-900/50 text-red-300 px-2 py-1 rounded font-bold hover:bg-red-900">Remove</button>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="space-y-4 text-xs max-h-[75vh] overflow-y-auto pr-1">
+                            <!-- Board Report -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-amber-500/50 space-y-3">
+                                <h3 class="font-bold text-amber-400 text-sm">📊 Board Full Access: Members & Evaluations Report</h3>
+                                <div class="space-y-2 max-h-52 overflow-y-auto">
+                                    ${db.members.length === 0 ? '<p class="text-center text-slate-500 py-4">No members registered yet.</p>' :
+                                        db.members.map(m => {
+                                            const leader = db.leaders.find(l => l.id === m.leaderId) || { name: 'Unknown', committee: 'N/A' };
+                                            const ev = db.evaluations.find(e => e.memberId === m.id);
+                                            return `
+                                                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-1">
+                                                    <div class="flex justify-between items-center font-bold">
+                                                        <span class="text-white">${m.name} <span class="text-amber-400">[${leader.committee}]</span></span>
+                                                        <span class="${ev ? 'text-emerald-400' : 'text-red-400'}">${ev ? 'Score: ' + ev.totalScore + ' Marks' : 'Not Evaluated'}</span>
+                                                    </div>
+                                                    <p class="text-slate-400 text-[11px]">Leader: ${leader.name}</p>
+                                                    ${ev ? `
+                                                        <div class="bg-slate-900 p-2 rounded mt-1 space-y-1 text-[11px]">
+                                                            <p class="text-slate-300"><b>Notes:</b> ${ev.indNotes || 'None'}</p>
+                                                            <div class="grid grid-cols-2 gap-1 text-[10px]">
+                                                                <span class="text-emerald-300"><b>S:</b> ${ev.swot.s || '-'}</span>
+                                                                <span class="text-red-300"><b>W:</b> ${ev.swot.w || '-'}</span>
+                                                            </div>
+                                                        </div>
+                                                    ` : ''}
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Board Settings -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                                <h3 class="font-bold text-amber-400 text-sm">🛡️ Board Security Settings</h3>
+                                <input type="text" id="updateBoardName" value="${db.board.name}" placeholder="Board Name" class="w-full p-2.5 bg-slate-800 text-white rounded border border-slate-700 font-bold mb-2" />
+                                <input type="password" id="updateBoardPass" placeholder="New Password (Optional)" class="w-full p-2.5 bg-slate-800 text-white rounded border border-slate-700 mb-2" />
+                                <button onclick="updateBoardSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg">Save Settings</button>
+                            </div>
+
+                            <!-- Add HR Leader -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                                <h3 class="font-bold text-amber-400 text-sm">➕ Add New HR Leader</h3>
+                                <input type="text" id="lName" placeholder="Leader Full Name" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold" />
+                                <select id="lComm" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold">
+                                    ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                                </select>
+                                <input type="password" id="lPass" placeholder="Leader Password" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold" />
+                                <button onclick="addLeader()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg">Add Leader</button>
+                            </div>
+
+                            <!-- Manage Leaders -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2">
+                                <h3 class="font-bold text-amber-400 text-sm">👥 Manage HR Leaders (${db.leaders.length})</h3>
+                                <div class="space-y-2 max-h-48 overflow-y-auto">
+                                    ${db.leaders.map((l) => `
+                                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <span class="font-bold text-white">${l.name} <span class="text-amber-400">[${l.committee}]</span></span>
+                                                <button onclick="deleteLeader('${l.id}')" class="bg-red-900/50 text-red-300 px-2 py-1 rounded font-bold text-[11px]">Delete</button>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <input type="text" id="reset_pass_${l.id}" placeholder="New Password" class="p-1.5 bg-slate-900 text-white rounded text-xs w-full border border-slate-700" />
+                                                <button onclick="resetLeaderPass('${l.id}')" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1 rounded font-bold text-xs">Reset Pass</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `}
+                `;
+            }
+            else if (currentView === 'eval') {
+                const comm = currentUser.committee;
+                const techList = db.techCriteria[comm] || [];
+                const existingEval = db.evaluations.find(e => e.memberId === activeMember.id) || { pScores: {}, tScores: {}, pNotes: {}, tNotes: {}, indNotes: '', swot: {s:'', w:''} };
+
+                app.innerHTML = `
+                    <div class="space-y-4 text-xs">
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                            <h2 class="font-bold text-amber-400 text-sm">Evaluating: ${activeMember.name}</h2>
+                            <button onclick="currentView='dashboard'; render();" class="bg-slate-700 text-white px-3 py-1.5 rounded-lg">Back</button>
+                        </div>
+
+                        <!-- Personal Criteria -->
+                        <div class="bg-slate-950 p-4 rounded-xl border border-amber-900/50 space-y-3">
+                            <h3 class="font-bold text-amber-400 text-xs">Personal Criteria & Notes</h3>
+                            ${db.personalCriteria.map((c, i) => {
+                                const score = existingEval.pScores[i] !== undefined ? existingEval.pScores[i] : c.max;
+                                const note = existingEval.pNotes[i] || '';
+                                return `
+                                    <div class="bg-slate-900 p-3 rounded-lg space-y-2 border border-slate-800">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-slate-300 font-bold">${c.name} (Max: ${c.max})</span>
+                                            <input type="number" id="p_score_${i}" value="${score}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded text-amber-400 font-bold" />
+                                        </div>
+                                        <input type="text" id="p_note_${i}" value="${note}" placeholder="Add note (e.g., late, task delay...)" class="w-full p-2 bg-slate-800 text-slate-200 rounded border border-slate-700 text-[11px]" />
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Technical Criteria -->
+                        <div class="bg-slate-950 p-4 rounded-xl border border-amber-900/50 space-y-3">
+                            <h3 class="font-bold text-amber-400 text-xs">Technical Criteria (${comm}) & Notes</h3>
+                            ${techList.map((c, i) => {
+                                const score = existingEval.tScores[i] !== undefined ? existingEval.tScores[i] : c.max;
+                                const note = existingEval.tNotes[i] || '';
+                                return `
+                                    <div class="bg-slate-900 p-3 rounded-lg space-y-2 border border-slate-800">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-slate-300 font-bold">${c.name} (Max: ${c.max})</span>
+                                            <input type="number" id="t_score_${i}" value="${score}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded text-amber-400 font-bold" />
+                                        </div>
+                                        <input type="text" id="t_note_${i}" value="${note}" placeholder="Add technical note..." class="w-full p-2 bg-slate-800 text-slate-200 rounded border border-slate-700 text-[11px]" />
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- SWOT -->
+                        <div class="bg-slate-950 p-4 rounded-xl border border-amber-900/50 space-y-3">
+                            <h3 class="font-bold text-amber-400 text-xs">Individual Assessment & SWOT</h3>
+                            <textarea id="indNotes" placeholder="General performance notes..." class="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white h-16">${existingEval.indNotes}</textarea>
+                            <div class="grid grid-cols-2 gap-2">
+                                <textarea id="swotS" placeholder="Strengths" class="p-2 bg-slate-900 border border-slate-700 rounded text-white h-14">${existingEval.swot.s}</textarea>
+                                <textarea id="swotW" placeholder="Weaknesses" class="p-2 bg-slate-900 border border-slate-700 rounded text-white h-14">${existingEval.swot.w}</textarea>
+                            </div>
+                        </div>
+
+                        <button onclick="saveEvaluation()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3.5 rounded-xl shadow text-sm">Save & Submit Evaluation</button>
+                    </div>
+                `;
             }
         }
 
-        function doLogin() {
-            var role = document.getElementById('role').value;
-            var pass = document.getElementById('pass').value;
+        function setLoginRole(role) {
+            loginRole = role;
+            render();
+        }
 
-            if(role === 'board') {
-                if(pass === 'board123') {
-                    document.getElementById('app').innerHTML = '<h2 class="success">Welcome Board Admin!</h2><p style="text-align:center; color:#cbd5e1;">System is working perfectly.</p><button onclick="location.reload()">Logout</button>';
+        function updateLeaderDropdown() {
+            const comm = document.getElementById('commSelect').value;
+            const select = document.getElementById('leaderSelect');
+            const filtered = db.leaders.filter(l => l.committee === comm);
+            select.innerHTML = filtered.length === 0 ? '<option value="">No leaders found</option>' :
+                filtered.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+        }
+
+        function handleLogin() {
+            const pass = document.getElementById('passInput').value.trim();
+
+            if (loginRole === 'board') {
+                const boardName = document.getElementById('boardNameInput').value.trim();
+                if (!boardName) { alert('Please enter Board Admin Name'); return; }
+                
+                db.board.name = boardName;
+                if (pass === db.board.pass) {
+                    currentUser = { role: 'board', name: db.board.name };
+                    currentView = 'dashboard';
+                    saveDB();
+                    render();
                 } else {
-                    alert('Wrong Password! Use: board123');
+                    alert('Wrong Board Password! (Default: board123)');
                 }
             } else {
-                document.getElementById('app').innerHTML = '<h2 class="success">Welcome HR Leader!</h2><p style="text-align:center; color:#cbd5e1;">System is working perfectly.</p><button onclick="location.reload()">Logout</button>';
+                const leaderId = document.getElementById('leaderSelect').value;
+                const leader = db.leaders.find(l => l.id === leaderId);
+                if (leader && leader.pass === pass) {
+                    currentUser = { role: 'hr', name: leader.name, committee: leader.committee, id: leader.id };
+                    currentView = 'dashboard';
+                    render();
+                } else {
+                    alert('Wrong Leader Password!');
+                }
             }
         }
+
+        function updateBoardSettings() {
+            const name = document.getElementById('updateBoardName').value.trim();
+            const pass = document.getElementById('updateBoardPass').value.trim();
+            if (!name) { alert('Board name cannot be empty'); return; }
+            db.board.name = name;
+            if (pass) db.board.pass = pass;
+            saveDB();
+            currentUser.name = name;
+            alert('Board settings updated successfully!');
+            render();
+        }
+
+        function addLeader() {
+            const name = document.getElementById('lName').value.trim();
+            const committee = document.getElementById('lComm').value;
+            const pass = document.getElementById('lPass').value.trim();
+            if (!name || !pass) { alert('Please fill all fields'); return; }
+            
+            db.leaders.push({ id: 'l_' + Date.now(), name, committee, pass });
+            saveDB();
+            alert(`HR Leader ${name} added successfully!`);
+            render();
+        }
+
+        function deleteLeader(id) {
+            if (confirm('Delete this leader?')) {
+                db.leaders = db.leaders.filter(l => l.id !== id);
+                saveDB();
+                render();
+            }
+        }
+
+        function resetLeaderPass(id) {
+            const newPass = document.getElementById(`reset_pass_${id}`).value.trim();
+            if (!newPass) { alert('Enter new password'); return; }
+            const leader = db.leaders.find(l => l.id === id);
+            if (leader) {
+                leader.pass = newPass;
+                saveDB();
+                alert('Password updated successfully!');
+                render();
+            }
+        }
+
+        function addMember() {
+            const name = document.getElementById('newMemName').value.trim();
+            if (!name) { alert('Enter member name'); return; }
+            db.members.push({ id: 'm_' + Date.now(), name, leaderId: currentUser.id });
+            saveDB();
+            render();
+        }
+
+        function deleteMember(id) {
+            if (confirm("Remove this member?")) {
+                db.members = db.members.filter(m => m.id !== id);
+                saveDB();
+                render();
+            }
+        }
+
+        function openEval(id) {
+            activeMember = db.members.find(m => m.id === id);
+            currentView = 'eval';
+            render();
+        }
+
+        function saveEvaluation() {
+            let total = 0;
+            let pScores = {}, pNotes = {};
+            db.personalCriteria.forEach((c, i) => {
+                const score = Number(document.getElementById(`p_score_${i}`).value || 0);
+                const note = document.getElementById(`p_note_${i}`).value.trim();
+                pScores[i] = score;
+                pNotes[i] = note;
+                total += score;
+            });
+
+            let tScores = {}, tNotes = {};
+            const techList = db.techCriteria[currentUser.committee] || [];
+            techList.forEach((c, i) => {
+                const score = Number(document.getElementById(`t_score_${i}`).value || 0);
+                const note = document.getElementById(`t_note_${i}`).value.trim();
+                tScores[i] = score;
+                tNotes[i] = note;
+                total += score;
+            });
+
+            const indNotes = document.getElementById('indNotes').value.trim();
+            const swot = {
+                s: document.getElementById('swotS').value.trim(),
+                w: document.getElementById('swotW').value.trim()
+            };
+
+            db.evaluations = db.evaluations.filter(e => e.memberId !== activeMember.id);
+            db.evaluations.push({
+                memberId: activeMember.id,
+                totalScore: total,
+                pScores, pNotes, tScores, tNotes,
+                indNotes, swot
+            });
+
+            saveDB();
+            alert(`Evaluation saved successfully!\nTotal Score: ${total} Marks`);
+            currentView = 'dashboard';
+            render();
+        }
+
+        function logout() {
+            currentUser = null;
+            currentView = 'login';
+            render();
+        }
+
+        render();
     </script>
 </body>
 </html>
