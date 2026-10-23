@@ -13,8 +13,7 @@
     </div>
 
     <script>
-        // Database & State
-        let db = JSON.parse(localStorage.getItem('enactus_master_v1')) || {
+        let db = JSON.parse(localStorage.getItem('enactus_master_v2')) || {
             leaders: [
                 { id: "l1", name: "Omar", committee: "PM", pass: "123" }
             ],
@@ -30,17 +29,16 @@
             techCriteria: {
                 PM: [{ name: "Problem Solving", max: 30 }, { name: "Project Planning", max: 30 }],
                 PR: [{ name: "Negotiation", max: 30 }, { name: "Sponsorship", max: 30 }],
-                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }],
-                Media: [{ name: "Design Quality", max: 30 }, { name: "Content Creation", max: 30 }]
+                HR: [{ name: "Recruitment", max: 30 }, { name: "Member Relations", max: 30 }]
             }
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_master_v1', JSON.stringify(db));
+            localStorage.setItem('enactus_master_v2', JSON.stringify(db));
         }
 
-        let currentView = 'login'; // login, dashboard, eval
-        let loginRole = 'leader'; // leader, board
+        let currentView = 'login';
+        let loginRole = 'leader';
         let currentUser = null;
         let activeMember = null;
 
@@ -119,4 +117,160 @@
                                             <span class="font-bold text-white text-sm">${m.name}</span>
                                             <div class="flex gap-2">
                                                 <button onclick="openEval('${m.id}')" class="bg-emerald-600/50 text-emerald-300 px-3 py-1 rounded font-bold hover:bg-emerald-600">Evaluate & SWOT</button>
-                                                <button onclick="deleteMember('${m.id}')" class="bg-red-900/
+                                                <button onclick="deleteMember('${m.id}')" class="bg-red-900/50 text-red-300 px-2 py-1 rounded font-bold hover:bg-red-900">Remove</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="space-y-4 text-xs">
+                            <div class="bg-slate-900 p-5 rounded-xl border border-slate-700 space-y-3">
+                                <h3 class="font-bold text-amber-400 text-sm">➕ Add New HR Leader</h3>
+                                <input type="text" id="lName" placeholder="Leader Name" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold" />
+                                <input type="text" id="lComm" placeholder="Committee (PM, PR...)" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold uppercase" />
+                                <input type="password" id="lPass" placeholder="Password" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold" />
+                                <button onclick="addLeader()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg">Add Leader</button>
+                            </div>
+                        </div>
+                    `}
+                `;
+            }
+            else if (currentView === 'eval') {
+                const comm = currentUser.committee;
+                const techList = db.techCriteria[comm] || [];
+
+                app.innerHTML = `
+                    <div class="space-y-4 text-xs">
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                            <h2 class="font-bold text-emerald-400 text-sm">Evaluating: ${activeMember.name}</h2>
+                            <button onclick="currentView='dashboard'; render();" class="bg-slate-700 text-white px-3 py-1.5 rounded-lg">Back</button>
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-emerald-900/50 space-y-2">
+                            <h3 class="font-bold text-emerald-400 text-xs">Personal Criteria</h3>
+                            ${db.personalCriteria.map((c, i) => `
+                                <div class="flex justify-between items-center bg-slate-900 p-2 rounded">
+                                    <span class="text-slate-300">${c.name} (Max: ${c.max})</span>
+                                    <input type="number" id="p_${i}" value="${c.max}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded text-emerald-400 font-bold" />
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-sky-900/50 space-y-2">
+                            <h3 class="font-bold text-sky-400 text-xs">Technical Criteria (${comm})</h3>
+                            ${techList.map((c, i) => `
+                                <div class="flex justify-between items-center bg-slate-900 p-2 rounded">
+                                    <span class="text-slate-300">${c.name} (Max: ${c.max})</span>
+                                    <input type="number" id="t_${i}" value="${c.max}" max="${c.max}" min="0" class="w-16 p-1 bg-slate-800 border border-slate-700 text-center rounded text-sky-400 font-bold" />
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-amber-900/50 space-y-3">
+                            <h3 class="font-bold text-amber-400 text-xs">Individual Assessment & SWOT Analysis</h3>
+                            <textarea id="indNotes" placeholder="Individual assessment notes..." class="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white h-16"></textarea>
+                            <div class="grid grid-cols-2 gap-2">
+                                <textarea id="swotS" placeholder="Strengths" class="p-2 bg-slate-900 border border-slate-700 rounded text-white h-14"></textarea>
+                                <textarea id="swotW" placeholder="Weaknesses" class="p-2 bg-slate-900 border border-slate-700 rounded text-white h-14"></textarea>
+                            </div>
+                        </div>
+
+                        <button onclick="saveEvaluation()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3.5 rounded-xl shadow text-sm">Save & Submit Evaluation</button>
+                    </div>
+                `;
+            }
+        }
+
+        function setLoginRole(role) {
+            loginRole = role;
+            render();
+        }
+
+        function updateLeaderDropdown() {
+            const comm = document.getElementById('commSelect').value;
+            const select = document.getElementById('leaderSelect');
+            const filtered = db.leaders.filter(l => l.committee === comm);
+            select.innerHTML = filtered.length === 0 ? '<option value="">No leaders found</option>' :
+                filtered.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+        }
+
+        function handleLogin() {
+            const pass = document.getElementById('passInput').value.trim();
+
+            if (loginRole === 'board') {
+                if (pass === db.boardPass) {
+                    currentUser = { role: 'board', name: 'Board Administrator' };
+                    currentView = 'dashboard';
+                    render();
+                } else {
+                    alert('Wrong Board Password! Use: board123');
+                }
+            } else {
+                const leaderId = document.getElementById('leaderSelect').value;
+                const leader = db.leaders.find(l => l.id === leaderId);
+                if (leader && leader.pass === pass) {
+                    currentUser = { role: 'hr', name: leader.name, committee: leader.committee, id: leader.id };
+                    currentView = 'dashboard';
+                    render();
+                } else {
+                    alert('Wrong Password! Use: 123');
+                }
+            }
+        }
+
+        function addMember() {
+            const name = document.getElementById('newMemName').value.trim();
+            if (!name) { alert('Enter member name'); return; }
+            db.members.push({ id: 'm_' + Date.now(), name, leaderId: currentUser.id });
+            saveDB();
+            render();
+        }
+
+        function deleteMember(id) {
+            if (confirm("Remove this member?")) {
+                db.members = db.members.filter(m => m.id !== id);
+                saveDB();
+                render();
+            }
+        }
+
+        function openEval(id) {
+            activeMember = db.members.find(m => m.id === id);
+            currentView = 'eval';
+            render();
+        }
+
+        function saveEvaluation() {
+            let total = 0;
+            db.personalCriteria.forEach((c, i) => total += Number(document.getElementById(`p_${i}`).value || 0));
+            const techList = db.techCriteria[currentUser.committee] || [];
+            techList.forEach((c, i) => total += Number(document.getElementById(`t_${i}`).value || 0));
+
+            alert(`Evaluation saved successfully for ${activeMember.name}!\nTotal Score: ${total} Marks`);
+            currentView = 'dashboard';
+            render();
+        }
+
+        function addLeader() {
+            const name = document.getElementById('lName').value.trim();
+            const committee = document.getElementById('lComm').value.trim().toUpperCase();
+            const pass = document.getElementById('lPass').value.trim();
+            if (!name || !committee || !pass) { alert('Fill all fields'); return; }
+            db.leaders.push({ id: 'l_' + Date.now(), name, committee, pass });
+            if (!db.techCriteria[committee]) db.techCriteria[committee] = [{ name: "General Tech Skill", max: 30 }];
+            saveDB();
+            alert('Leader added successfully!');
+            render();
+        }
+
+        function logout() {
+            currentUser = null;
+            currentView = 'login';
+            render();
+        }
+
+        render();
+    </script>
+</body>
+</html>
