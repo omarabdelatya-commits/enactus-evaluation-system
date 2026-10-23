@@ -13,34 +13,79 @@
   </div>
 
   <script>
-    let db = JSON.parse(localStorage.getItem('enactus_final_v12')) || {
+    let db = JSON.parse(localStorage.getItem('enactus_final_v13')) || {
       leaders: [
         { id: "l1", name: "Omar", committee: "PM", pass: "123" },
         { id: "l2", name: "Ahmed", committee: "PR", pass: "123" }
       ],
       members: [],
       evaluations: [],
-      boardPass: "board123"
+      boardPass: "board123",
+      personalCriteria: [
+        { name: "Commitment & Attendance", max: 5 },
+        { name: "Task Commitment & Responsibility", max: 5 },
+        { name: "Social Media Engagement", max: 5 },
+        { name: "Respect for Hierarchy & Professionalism", max: 5 },
+        { name: "Communication & Responsiveness", max: 5 },
+        { name: "Teamwork & Cooperation", max: 5 },
+        { name: "Initiative & Problem Solving", max: 5 },
+        { name: "Feedback & Improvement", max: 5 }
+      ],
+      techCriteria: {
+        PM: [
+          { name: "Research & Problem Identification", max: 10 },
+          { name: "Research Quality & Validation", max: 10 },
+          { name: "Project Planning & Documentation", max: 10 },
+          { name: "Task Execution & Deliverables", max: 10 },
+          { name: "Critical Thinking & Problem Solving", max: 10 },
+          { name: "Project Development & Practical Contribution", max: 10 }
+        ],
+        PR: [
+          { name: "Communication & Negotiation", max: 10 },
+          { name: "Sponsorship Research & Prospecting", max: 10 },
+          { name: "Outreach & Follow-up", max: 10 },
+          { name: "Partnership Development", max: 10 },
+          { name: "Proposal & Pitch Quality", max: 10 },
+          { name: "Task Execution & Reporting", max: 10 }
+        ],
+        HR: [
+          { name: "HR Knowledge & Application", max: 10 },
+          { name: "Recruitment & Interviewing", max: 10 },
+          { name: "Data Management & Documentation", max: 10 },
+          { name: "Member Follow-up & Evaluation", max: 10 },
+          { name: "Conflict Handling & Fairness", max: 10 },
+          { name: "Confidentiality & Professional HR Practice", max: 10 }
+        ],
+        Media: [
+          { name: "Content Creation & Copywriting", max: 10 },
+          { name: "Design / Editing Quality", max: 10 },
+          { name: "Branding & Visual Consistency", max: 10 },
+          { name: "Content Planning & Execution", max: 10 },
+          { name: "Creativity & Audience Relevance", max: 10 },
+          { name: "Technical Skills & File Management", max: 10 }
+        ],
+        Presentation: [
+          { name: "Presentation Structure & Storytelling", max: 10 },
+          { name: "Research & Content Accuracy", max: 10 },
+          { name: "Slide Design & Visual Communication", max: 10 },
+          { name: "Public Speaking & Delivery", max: 10 },
+          { name: "Persuasion & Audience Engagement", max: 10 },
+          { name: "Rehearsal, Feedback & Improvement", max: 10 }
+        ],
+        OC: [
+          { name: "Event Planning & Preparation", max: 10 },
+          { name: "Logistics & Resource Management", max: 10 },
+          { name: "Coordination & Task Distribution", max: 10 },
+          { name: "On-ground Execution", max: 10 },
+          { name: "Contingency Planning & Problem Solving", max: 10 },
+          { name: "Post-event Reporting & Organization", max: 10 }
+        ]
+      }
     };
 
     function saveDB() {
-      localStorage.setItem('enactus_final_v12', JSON.stringify(db));
+      localStorage.setItem('enactus_final_v13', JSON.stringify(db));
     }
-
-    const committeeTechCriteria = {
-      PM: ["Research & Problem Identification (10)", "Research Quality & Validation (10)", "Project Planning & Documentation (10)", "Task Execution & Deliverables (10)", "Critical Thinking & Problem Solving (10)", "Project Development & Practical Contribution (10)"],
-      PR: ["Communication & Negotiation (10)", "Sponsorship Research & Prospecting (10)", "Outreach & Follow-up (10)", "Partnership Development (10)", "Proposal & Pitch Quality (10)", "Task Execution & Reporting (10)"],
-      HR: ["HR Knowledge & Application (10)", "Recruitment & Interviewing (10)", "Data Management & Documentation (10)", "Member Follow-up & Evaluation (10)", "Conflict Handling & Fairness (10)", "Confidentiality & Professional HR Practice (10)"],
-      Media: ["Content Creation & Copywriting (10)", "Design / Editing Quality (10)", "Branding & Visual Consistency (10)", "Content Planning & Execution (10)", "Creativity & Audience Relevance (10)", "Technical Skills & File Management (10)"],
-      Presentation: ["Presentation Structure & Storytelling (10)", "Research & Content Accuracy (10)", "Slide Design & Visual Communication (10)", "Public Speaking & Delivery (10)", "Persuasion & Audience Engagement (10)", "Rehearsal, Feedback & Improvement (10)"],
-      OC: ["Event Planning & Preparation (10)", "Logistics & Resource Management (10)", "Coordination & Task Distribution (10)", "On-ground Execution (10)", "Contingency Planning & Problem Solving (10)", "Post-event Reporting & Organization (10)"]
-    };
-
-    const personalCriteria = [
-      "Commitment & Attendance (5)", "Task Commitment & Responsibility (5)", "Social Media Engagement (5)", 
-      "Respect for Hierarchy & Professionalism (5)", "Communication & Responsiveness (5)", "Teamwork & Cooperation (5)", 
-      "Initiative & Problem Solving (5)", "Feedback & Improvement (5)"
-    ];
 
     let activeTab = 'leader';
     let currentUser = null;
@@ -65,7 +110,7 @@
             <div>
               <label class="block text-xs font-bold text-slate-300 mb-1">Select Committee</label>
               <select id="commSelect" onchange="updateLeaderDropdown()" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-medium text-white outline-none">
-                ${Object.keys(committeeTechCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
+                ${Object.keys(db.techCriteria).map(c => `<option value="${c}">${c}</option>`).join('')}
               </select>
             </div>
             <div>
@@ -152,12 +197,12 @@
             </div>
 
             <div class="space-y-2 max-h-96 overflow-y-auto">
-              ${myMembers.length === 0 ? '<p class="text-sm text-slate-400 text-center py-8">No members added yet.</p>.' :
+              ${myMembers.length === 0 ? '<p class="text-sm text-slate-400 text-center py-8">No members added yet.</p>' :
                 myMembers.map((m, idx) => `
                   <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-sm">
                     <span class="font-bold text-white">${idx + 1}. ${m.name}</span>
                     <div class="flex gap-2">
-                      <button onclick="openEvalForm('${m.id}')" class="bg-emerald-600/50 text-emerald-300 px-3 py-1 rounded text-xs font-bold hover:bg-emerald-600">Evaluate</button>
+                      <button onclick="openEvalForm('${m.id}')" class="bg-emerald-600/50 text-emerald-300 px-3 py-1 rounded text-xs font-bold hover:bg-emerald-600">Evaluate & SWOT</button>
                       <button onclick="deleteMember('${m.id}')" class="bg-red-900/50 text-red-300 px-3 py-1 rounded text-xs font-bold hover:bg-red-900">Remove</button>
                     </div>
                   </div>
@@ -169,44 +214,74 @@
         const memberId = window.activeMemberId;
         const member = db.members.find(m => m.id === memberId);
         const commKey = currentUser.committee;
-        const techList = committeeTechCriteria[commKey];
+        const techList = db.techCriteria[commKey] || [];
 
         contentHtml = `
           <form onsubmit="submitEvaluation(event, '${memberId}')" class="space-y-6">
             <div class="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-700">
               <div>
-                <h3 class="text-emerald-400 font-bold text-base">Evaluating: ${member.name}</h3>
-                <p class="text-xs text-slate-400">Committee: ${commKey} | Leader: ${currentUser.name}</p>
+                <h3 class="text-emerald-400 font-bold text-base">Comprehensive Evaluation: ${member.name}</h3>
+                <p class="text-xs text-slate-400">Committee: ${commKey} \vert{} Evaluator:${currentUser.name}</p>
               </div>
-              <button type="button" onclick="renderDashboard('members')" class="bg-slate-700 text-white px-3 py-1 rounded text-xs">Back to Members</button>
+              <button type="button" onclick="renderDashboard('members')" class="bg-slate-700 text-white px-3 py-1 rounded text-xs">Back</button>
             </div>
 
+            <!-- Personal Criteria -->
             <div class="border border-emerald-900/50 rounded-xl p-4 bg-emerald-950/25 space-y-3">
-              <h4 class="text-sm font-bold text-emerald-400">1. Personal Evaluation (Out of 40)</h4>
-              ${personalCriteria.map((crit, idx) => `
+              <h4 class="text-sm font-bold text-emerald-400">1. Personal Evaluation</h4>
+              ${db.personalCriteria.map((crit, idx) => `
                 <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700 text-xs gap-2">
-                  <span class="text-slate-300">${idx + 1}. ${crit}</span>
-                  <input type="number" min="0" max="5" value="5" id="per_${idx}" oninput="calcScore()" class="w-16 p-1.5 bg-slate-800 text-center font-bold text-emerald-400 rounded border border-slate-700" />
+                  <span class="text-slate-300">${idx + 1}. ${crit.name} (Max: ${crit.max})</span>
+                  <input type="number" min="0" max="${crit.max}" value="${crit.max}" id="per_${idx}" oninput="calcScore()" class="w-16 p-1.5 bg-slate-800 text-center font-bold text-emerald-400 rounded border border-slate-700" />
                 </div>
               `).join('')}
             </div>
 
+            <!-- Technical Criteria -->
             <div class="border border-sky-900/50 rounded-xl p-4 bg-sky-950/25 space-y-3">
-              <h4 class="text-sm font-bold text-sky-400">2. Technical Evaluation: ${commKey} (Out of 60)</h4>
-              ${techList.map((crit, idx) => `
+              <h4 class="text-sm font-bold text-sky-400">2. Technical Evaluation: ${commKey}</h4>${techList.map((crit, idx) => `
                 <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700 text-xs gap-2">
-                  <span class="text-slate-300">${idx + 1}. ${crit}</span>
-                  <input type="number" min="0" max="10" value="10" id="tech_${idx}" oninput="calcScore()" class="w-16 p-1.5 bg-slate-800 text-center font-bold text-sky-400 rounded border border-slate-700" />
+                  <span class="text-slate-300">${idx + 1}. ${crit.name} (Max: ${crit.max})</span>
+                  <input type="number" min="0" max="${crit.max}" value="${crit.max}" id="tech_${idx}" oninput="calcScore()" class="w-16 p-1.5 bg-slate-800 text-center font-bold text-sky-400 rounded border border-slate-700" />
                 </div>
               `).join('')}
+            </div>
+
+            <!-- Individual Assessment & SWOT Analysis -->
+            <div class="border border-amber-900/50 rounded-xl p-4 bg-amber-950/25 space-y-4">
+              <h4 class="text-sm font-bold text-amber-400">3. Individual Assessment & SWOT Analysis</h4>
+              
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Individual Assessment Notes</label>
+                <textarea id="indNotes" rows="2" placeholder="Write general notes about member performance..." class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"></textarea>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-emerald-400 mb-1">💪 Strengths</label>
+                  <textarea id="swotS" rows="2" placeholder="What are their strong points?" class="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-red-400 mb-1">⚠️ Weaknesses</label>
+                  <textarea id="swotW" rows="2" placeholder="Areas needing improvement..." class="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-blue-400 mb-1">🚀 Opportunities</label>
+                  <textarea id="swotO" rows="2" placeholder="Growth opportunities..." class="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-amber-400 mb-1">⚡ Threats / Challenges</label>
+                  <textarea id="swotT" rows="2" placeholder="External challenges..." class="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"></textarea>
+                </div>
+              </div>
             </div>
 
             <div class="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-700">
               <div>
-                <span class="text-xs text-slate-400">Final Total Score:</span>
-                <span id="finalScore" class="text-xl font-extrabold text-emerald-400">100 / 100 Marks</span>
+                <span class="text-xs text-slate-400">Total Score:</span>
+                <span id="finalScore" class="text-xl font-extrabold text-emerald-400">0 Marks</span>
               </div>
-              <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs">Save Evaluation</button>
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs">Save Full Evaluation</button>
             </div>
           </form>
         `;
@@ -215,15 +290,20 @@
         contentHtml = `
           <div class="space-y-4">
             <h3 class="font-bold text-white text-lg">📊 Submitted Evaluations (${myEvals.length})</h3>
-            <div class="space-y-2 max-h-96 overflow-y-auto">
+            <div class="space-y-3 max-h-96 overflow-y-auto">
               ${myEvals.length === 0 ? '<p class="text-sm text-slate-400 text-center py-8">No evaluations found.</p>' :
                 myEvals.map(ev => `
-                  <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex justify-between items-center text-sm">
-                    <div>
-                      <h4 class="font-bold text-emerald-400">${ev.memberName}</h4>
-                      <p class="text-xs text-slate-400">Committee: ${ev.comm} | Evaluator: ${ev.evaluatorName}</p>
+                  <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2 text-xs">
+                    <div class="flex justify-between items-center">
+                      <span class="font-bold text-emerald-400 text-sm">${ev.memberName}</span>
+                      <span class="font-extrabold text-emerald-400 text-sm">${ev.score} Marks</span>
                     </div>
-                    <span class="font-extrabold text-emerald-400 text-base">${ev.score} / 100</span>
+                    <p class="text-slate-400">Committee: ${ev.comm} | Evaluator: ${ev.evaluatorName}</p>
+                    ${ev.indNotes ? `<p class="text-slate-300 bg-slate-800 p-2 rounded"><b>Notes:</b> ${ev.indNotes}</p>` : ''}
+                    <div class="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                      <div class="bg-emerald-950/30 p-1.5 rounded border border-emerald-900/50"><b>Strengths:</b> ${ev.swot.s || 'N/A'}</div>
+                      <div class="bg-red-950/30 p-1.5 rounded border border-red-900/50"><b>Weaknesses:</b> ${ev.swot.w || 'N/A'}</div>
+                    </div>
                   </div>
                 `).join('')}
             </div>
@@ -240,127 +320,19 @@
             </div>
             <button onclick="createLeader()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-2.5 rounded-lg text-xs">Add Leader</button>
 
-            <h3 class="font-bold text-blue-400 text-sm pt-4">⚙️ Manage Leaders (${db.leaders.length})</h3>
-            <div class="space-y-2 max-h-60 overflow-y-auto">
-              ${db.leaders.map((l, idx) => `
-                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
-                  <div>
-                    <span class="font-bold text-white">${l.name}</span>
-                    <span class="text-emerald-400 ml-2">[${l.committee}]</span>
-                  </div>
-                  <button onclick="deleteLeader('${l.id}')" class="bg-red-900/50 text-red-300 px-3 py-1 rounded font-bold hover:bg-red-900">Delete</button>
+            <h3 class="font-bold text-blue-400 text-sm pt-4">⚙️ Manage Criteria (Add/Edit/Delete & Max Marks)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <h4 class="font-bold text-xs text-emerald-400">Personal Criteria</h4>
+                <div class="space-y-2 max-h-40 overflow-y-auto">
+                  ${db.personalCriteria.map((c, i) => `
+                    <div class="flex justify-between items-center text-xs bg-slate-900 p-2 rounded">
+                      <span class="truncate w-36">${c.name} (${c.max} pts)</span>
+                      <button onclick="removePersonalCrit(${i})" class="text-red-400 font-bold px-2">X</button>
+                    </div>
+                  `).join('')}
                 </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      }
-
-      app.innerHTML = `
-        <div class="flex justify-between items-center border-b border-slate-700 pb-4 mb-6">
-          <div>
-            <h2 class="text-xl font-bold text-emerald-400">Enactus Qena Portal</h2>
-            <p class="text-xs text-slate-400">Logged in as: <span class="font-bold text-white">${currentUser.name}</span></p>
-          </div>
-          <button onclick="logout()" class="bg-red-900/50 text-red-300 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-900">Logout</button>
-        </div>
-
-        <div class="flex gap-2 mb-6 flex-wrap">
-          ${currentUser.role === 'hr' ? `
-            <button onclick="renderDashboard('members')" class="px-4 py-2 rounded-xl text-xs font-bold ${subTab === 'members' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}">👥 My Members (${myMembers.length})</button>
-          ` : ''}
-          <button onclick="renderDashboard('records')" class="px-4 py-2 rounded-xl text-xs font-bold ${subTab === 'records' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}">View Evaluations</button>
-          ${currentUser.role === 'board' ? `<button onclick="renderDashboard('settings')" class="px-4 py-2 rounded-xl text-xs font-bold ${subTab === 'settings' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}">⚙️ Board Management</button>` : ''}
-        </div>
-
-        ${contentHtml}
-      `;
-      if (subTab === 'evalForm') calcScore();
-    }
-
-    function calcScore() {
-      let per = 0;
-      for (let i = 0; i < 8; i++) per += Number(document.getElementById(`per_${i}`)?.value || 0);
-      const commKey = currentUser.committee;
-      const techList = committeeTechCriteria[commKey];
-      let tech = 0;
-      for (let i = 0; i < techList.length; i++) tech += Number(document.getElementById(`tech_${i}`)?.value || 0);
-      const total = per + tech;
-      const disp = document.getElementById('finalScore');
-      if (disp) disp.innerText = `${total} / 100 Marks`;
-    }
-
-    function addMember() {
-      const name = document.getElementById('newMemberName').value.trim();
-      if (!name) { alert('Enter member name'); return; }
-      db.members.push({ id: 'm_' + Date.now(), name, leaderId: currentUser.id, committee: currentUser.committee });
-      saveDB();
-      renderDashboard('members');
-    }
-
-    function deleteMember(id) {
-      if (confirm("Remove member?")) {
-        db.members = db.members.filter(m => m.id !== id);
-        saveDB();
-        renderDashboard('members');
-      }
-    }
-
-    function openEvalForm(memberId) {
-      window.activeMemberId = memberId;
-      renderDashboard('evalForm');
-    }
-
-    function submitEvaluation(e, memberId) {
-      e.preventDefault();
-      let per = 0;
-      for (let i = 0; i < 8; i++) per += Number(document.getElementById(`per_${i}`).value);
-      const techList = committeeTechCriteria[currentUser.committee];
-      let tech = 0;
-      for (let i = 0; i < techList.length; i++) tech += Number(document.getElementById(`tech_${i}`).value);
-      
-      const score = per + tech;
-      const member = db.members.find(m => m.id === memberId);
-
-      db.evaluations.unshift({
-        id: Date.now(),
-        memberName: member.name,
-        score,
-        comm: currentUser.committee,
-        evaluatorName: currentUser.name,
-        evaluatorId: currentUser.id
-      });
-      saveDB();
-      alert(`Evaluation saved for ${member.name}!\nFinal Score: ${score}/100`);
-      renderDashboard('records');
-    }
-
-    function createLeader() {
-      const name = document.getElementById('newName').value.trim();
-      const committee = document.getElementById('newComm').value.trim().toUpperCase();
-      const pass = document.getElementById('newPass').value.trim();
-      if (!name || !committee || !pass) { alert('Fill all fields'); return; }
-      db.leaders.push({ id: 'l_' + Date.now(), name, committee, pass });
-      saveDB();
-      alert('Leader added successfully!');
-      renderDashboard('settings');
-    }
-
-    function deleteLeader(id) {
-      if (db.leaders.length <= 1) { alert('Keep at least one leader'); return; }
-      if (confirm('Delete this leader?')) {
-        db.leaders = db.leaders.filter(l => l.id !== id);
-        saveDB();
-        renderDashboard('settings');
-      }
-    }
-
-    function logout() {
-      currentUser = null;
-      renderLogin();
-    }
-
-    renderLogin();
-  </script>
-</body>
-</html>
+                <div class="flex gap-2 pt-2">
+                  <input type="text" id="newPCrit" placeholder="New Criterion" class="p-1.5 bg-slate-900 text-xs rounded text-white w-full border border-slate-700" />
+                  <input type="number" id="newPMax" placeholder="Max" value="5" class="p-1.5 bg-slate-900 text-xs rounded text-white w-16 border border-slate-700" />
+                  <button onclick="addPersonalCrit()" class="bg-emerald-600 text-white
