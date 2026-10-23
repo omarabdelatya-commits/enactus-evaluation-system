@@ -4,16 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>نظام تقييم أعضاء إناكتس قنا</title>
-    <!-- React & ReactDOM CDN -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel JS compiler -->
+    <!-- React Core -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Compiler -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
   </head>
-  <body class="bg-gray-100">
+  <body class="bg-gray-50">
     <div id="root"></div>
-    <script type="text/babel" src="./App.jsx"></script>
+
+    <script type="text/babel">
+      // Loading Fallback & Dynamic Mount
+      window.addEventListener('DOMContentLoaded', () => {
+        if (window.App) {
+          const Root = window.App.default || window.App;
+          ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+        }
+      });
+    </script>
+    <script type="text/babel" data-plugins="transform-modules-umd" src="./App.jsx"></script>
   </body>
 </html>
