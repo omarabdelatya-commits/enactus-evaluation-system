@@ -8,13 +8,12 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-  <div id="app" class="max-w-2xl w-full bg-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-700">
+  <div id="app" class="max-w-3xl w-full bg-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-700">
     <!-- App Container -->
   </div>
 
   <script>
-    // قاعدة البيانات الشاملة
-    let db = JSON.parse(localStorage.getItem('enactus_db_v6')) || {
+    let db = JSON.parse(localStorage.getItem('enactus_db_v7')) || {
       leaders: [
         { id: "omar_pm", name: "Omar (PM Leader - Group 1)", user: "omar_pm", pass: "omar123", committee: "PM" },
         { id: "mohamed_pm", name: "Mohamed (PM Leader - Group 2)", user: "mohamed_pm", pass: "mohamed123", committee: "PM" },
@@ -24,15 +23,18 @@
         { id: "salma_pres", name: "Salma (Presentation Leader)", user: "salma_pres", pass: "salma123", committee: "Presentation" },
         { id: "youssef_oc", name: "Youssef (OC Leader)", user: "youssef_oc", pass: "youssef123", committee: "OC" }
       ],
+      members: [
+        { id: "m1", name: "Ahmed Ali", leaderId: "omar_pm", committee: "PM" },
+        { id: "m2", name: "Mahmoud Hassan", leaderId: "omar_pm", committee: "PM" }
+      ],
       boardPass: "board123",
       evaluations: []
     };
 
     function saveDB() {
-      localStorage.setItem('enactus_db_v6', JSON.stringify(db));
+      localStorage.setItem('enactus_db_v7', JSON.stringify(db));
     }
 
-    // المعايير الفنية الدقيقة لكل لجنة من الملف الأصلي (كل معيار من 10 درجات = إجمالي 60)
     const committeeTechCriteria = {
       PM: [
         "Research & Problem Identification (10)",
@@ -84,7 +86,6 @@
       ]
     };
 
-    // التقييم الشخصي الثابت (8 معايير × 5 درجات = 40)
     const personalCriteria = [
       "Commitment & Attendance (5)",
       "Task Commitment & Responsibility (5)",
@@ -119,305 +120,3 @@
         </div>
 
         <form onsubmit="handleLogin(event)" class="space-y-4">
-          ${activeTab === 'leader' ? `
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Select HR Leader</label>
-              <select id="leaderSelect" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-medium text-white outline-none">
-                ${db.leaders.map(l => `<option value="${l.id}">${l.name} [${l.committee}]</option>`).join('')}
-              </select>
-            </div>
-          ` : `
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-1">Board Administrator</label>
-              <input type="text" disabled value="Enactus Qena Board (Username: board)" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-medium text-slate-400 cursor-not-allowed" />
-            </div>
-          `}
-
-          <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Password</label>
-            <input type="password" id="passwordInput" required placeholder="Enter password" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-medium text-white outline-none focus:border-emerald-500" />
-          </div>
-
-          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow transition mt-2">
-            Sign In
-          </button>
-        </form>
-      `;
-    }
-
-    function switchTab(tab) {
-      activeTab = tab;
-      renderLogin();
-    }
-
-    function handleLogin(e) {
-      e.preventDefault();
-      const pass = document.getElementById('passwordInput').value.trim();
-
-      if (activeTab === 'board') {
-        if (pass === db.boardPass) {
-          currentUser = { role: 'board', name: 'Board Administrator' };
-          renderDashboard('form');
-        } else {
-          alert('Incorrect Board Password! (Default: board123)');
-        }
-      } else {
-        const leaderId = document.getElementById('leaderSelect').value;
-        const leader = db.leaders.find(l => l.id === leaderId);
-        if (leader && leader.pass === pass) {
-          currentUser = { role: 'hr', name: leader.name, committee: leader.committee, id: leader.id };
-          renderDashboard('form');
-        } else {
-          alert('Incorrect Password for this Leader!');
-        }
-      }
-    }
-
-    function renderDashboard(subTab) {
-      const app = document.getElementById('app');
-      app.className = "max-w-3xl w-full bg-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-700";
-      
-      const commKey = currentUser.role === 'hr' ? currentUser.committee : 'PM';
-      const techList = committeeTechCriteria[commKey] || committeeTechCriteria['PM'];
-
-      let contentHtml = '';
-
-      if (subTab === 'form') {
-        contentHtml = `
-          <form onsubmit="submitEvaluation(event)" class="space-y-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-900 p-4 rounded-xl border border-slate-700">
-              <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1">Member Full Name</label>
-                <input type="text" id="memberName" required placeholder="Enter member name" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white" />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1">Month</label>
-                <select id="evalMonth" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white">
-                  ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => `<option value="${m}">${m}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1">Assigned Committee</label>
-                <input type="text" disabled value="${currentUser.role === 'hr' ? currentUser.committee + ' (' + currentUser.name + ')' : 'Board Full Access'}" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm font-bold text-emerald-400 cursor-not-allowed" />
-              </div>
-            </div>
-
-            <!-- Personal Evaluation (40 Marks) -->
-            <div class="border border-emerald-900/50 rounded-xl p-4 bg-emerald-950/20 space-y-3">
-              <h3 class="text-base font-bold text-emerald-400">1. Personal Evaluation (Out of 40)</h3>
-              ${personalCriteria.map((crit, idx) => `
-                <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700 text-xs gap-2">
-                  <span class="font-medium text-slate-300">${idx + 1}. ${crit}</span>
-                  <input type="number" min="0" max="5" value="5" id="per_${idx}" oninput="calculateTotal()" class="w-16 p-1.5 bg-slate-800 border border-slate-700 text-center font-bold text-emerald-400 rounded" />
-                </div>
-              `).join('')}
-            </div>
-
-            <!-- Technical Evaluation (60 Marks) -->
-            <div class="border border-sky-900/50 rounded-xl p-4 bg-sky-950/20 space-y-3">
-              <h3 class="text-base font-bold text-sky-400">2. Technical Evaluation: ${commKey} Committee (Out of 60)</h3>
-              ${techList.map((crit, idx) => `
-                <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700 text-xs gap-2">
-                  <span class="font-medium text-slate-300">${idx + 1}. ${crit}</span>
-                  <input type="number" min="0" max="10" value="10" id="tech_${idx}" oninput="calculateTotal()" class="w-16 p-1.5 bg-slate-800 border border-slate-700 text-center font-bold text-sky-400 rounded" />
-                </div>
-              `).join('')}
-            </div>
-
-            <!-- Notes -->
-            <div class="border border-slate-700 rounded-xl p-4 bg-slate-900 space-y-3">
-              <h3 class="text-base font-bold text-slate-200">3. Monthly Review & Notes</h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div><label class="block text-slate-400 mb-1">Strongest Point</label><input type="text" id="note_strong" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-white" placeholder="e.g. Commitment" /></div>
-                <div><label class="block text-slate-400 mb-1">Needs Improvement</label><input type="text" id="note_improve" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-white" placeholder="e.g. Response speed" /></div>
-              </div>
-            </div>
-
-            <!-- Final Score & Submit -->
-            <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-900 text-white p-5 rounded-xl border border-slate-700 gap-4">
-              <div>
-                <span class="text-slate-400 text-xs block">Final Total Score:</span>
-                <span id="finalScoreDisplay" class="text-2xl font-extrabold text-emerald-400">100 / 100 Marks</span>
-              </div>
-              <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-3 rounded-xl shadow transition">
-                Save & Submit Evaluation
-              </button>
-            </div>
-          </form>
-        `;
-      } else if (subTab === 'records') {
-        const myEvals = currentUser.role === 'board' ? db.evaluations : db.evaluations.filter(e => e.evaluatorId === currentUser.id);
-        contentHtml = `
-          <div class="space-y-4">
-            <h3 class="font-bold text-white text-lg">📊 Submitted Records (${myEvals.length})</h3>
-            <div class="space-y-2 max-h-96 overflow-y-auto">
-              ${myEvals.length === 0 ? '<p class="text-sm text-slate-400 text-center py-8">No evaluations submitted yet.</p>' : 
-                myEvals.map(ev => `
-                  <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 flex justify-between items-center text-sm">
-                    <div>
-                      <h4 class="font-bold text-emerald-400">${ev.name}</h4>
-                      <p class="text-xs text-slate-400">Committee: <b>${ev.comm}</b> | Month: ${ev.month} | Leader: ${ev.evaluator}</p>
-                    </div>
-                    <span class="font-extrabold text-emerald-400 text-base">${ev.score}/100</span>
-                  </div>
-                `).join('')}
-            </div>
-          </div>
-        `;
-      } else if (subTab === 'settings' && currentUser.role === 'board') {
-        contentHtml = `
-          <div class="space-y-6 bg-slate-900 p-6 rounded-2xl border border-slate-700">
-            <div class="flex justify-between items-center">
-              <h3 class="font-bold text-blue-400 text-lg">⚙️ Manage HR Leaders</h3>
-              <button onclick="addNewLeader()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Add Leader</button>
-            </div>
-            
-            <div class="space-y-3 max-h-96 overflow-y-auto">
-              ${db.leaders.map((l, idx) => `
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 grid grid-cols-1 sm:grid-cols-4 gap-3 items-center text-xs">
-                  <div>
-                    <label class="block text-slate-400 mb-1">Name / Group:</label>
-                    <input type="text" id="l_name_${idx}" value="${l.name}" class="w-full p-2 bg-slate-900 border border-slate-700 text-white rounded font-bold" />
-                  </div>
-                  <div>
-                    <label class="block text-slate-400 mb-1">Committee:</label>
-                    <select id="l_comm_${idx}" class="w-full p-2 bg-slate-900 border border-slate-700 text-emerald-400 rounded font-bold">
-                      ${['PM', 'PR', 'HR', 'Media', 'Presentation', 'OC'].map(c => `<option value="${c}" ${l.committee === c ? 'selected' : ''}>${c}</option>`).join('')}
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-slate-400 mb-1">Password:</label>
-                    <input type="text" id="l_pass_${idx}" value="${l.pass}" class="w-full p-2 bg-slate-900 border border-slate-700 text-white rounded font-mono font-bold" />
-                  </div>
-                  <div class="flex items-end justify-end pt-4">
-                    <button onclick="deleteLeader(${idx})" class="bg-red-900/50 text-red-300 px-3 py-2 rounded font-bold hover:bg-red-900">Delete</button>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="text-center pt-2">
-              <button onclick="saveSettings()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl shadow">Save Leader Accounts</button>
-            </div>
-          </div>
-        `;
-      }
-      
-      app.innerHTML = `
-        <div class="flex justify-between items-center border-b border-slate-700 pb-4 mb-6">
-          <div>
-            <h2 class="text-xl font-bold text-emerald-400">Enactus Qena Evaluation</h2>
-            <p class="text-xs text-slate-400">Logged in as: <span class="font-bold text-white">${currentUser.name}</span> (${currentUser.role === 'hr' ? currentUser.committee + ' Committee' : 'Board Admin'})</p>
-          </div>
-          <button onclick="handleLogout()" class="bg-red-900/50 text-red-300 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-900">
-            Logout
-          </button>
-        </div>
-
-        <div class="flex gap-2 mb-6">
-          <button onclick="renderDashboard('form')" class="px-4 py-2 rounded-xl text-xs font-bold ${subTab === 'form' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}">New Evaluation</button>
-          <button onclick="renderDashboard('records')" class="px-4 py-2 rounded-xl text-xs font-bold ${subTab === 'records' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}">View Records</button>
-          ${currentUser.role === 'board' ? `<button onclick="renderDashboard('settings')" class="px-4 py-2 rounded-xl text-xs font-bold ${subTab === 'settings' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-700'}">⚙️ Manage Leaders</button>` : ''}
-        </div>
-
-        ${contentHtml}
-      `;
-      if (subTab === 'form') calculateTotal();
-    }
-
-    function calculateTotal() {
-      let perTotal = 0;
-      for (let i = 0; i < 8; i++) {
-        perTotal += Number(document.getElementById(`per_${i}`)?.value || 0);
-      }
-      
-      const commKey = currentUser.role === 'hr' ? currentUser.committee : 'PM';
-      const techList = committeeTechCriteria[commKey] || committeeTechCriteria['PM'];
-      
-      let techTotal = 0;
-      for (let i = 0; i < techList.length; i++) {
-        techTotal += Number(document.getElementById(`tech_${i}`)?.value || 0);
-      }
-
-      const final = perTotal + techTotal;
-      const display = document.getElementById('finalScoreDisplay');
-      if (display) display.innerText = `${final} / 100 Marks`;
-    }
-
-    function submitEvaluation(e) {
-      e.preventDefault();
-      const name = document.getElementById('memberName').value.trim();
-      const month = document.getElementById('evalMonth').value;
-      
-      let perTotal = 0;
-      for (let i = 0; i < 8; i++) perTotal += Number(document.getElementById(`per_${i}`).value || 0);
-      
-      const commKey = currentUser.role === 'hr' ? currentUser.committee : 'PM';
-      const techList = committeeTechCriteria[commKey];
-      let techTotal = 0;
-      for (let i = 0; i < techList.length; i++) techTotal += Number(document.getElementById(`tech_${i}`).value || 0);
-      
-      const score = perTotal + techTotal;
-
-      db.evaluations.unshift({
-        id: Date.now(),
-        name,
-        month,
-        score,
-        comm: commKey,
-        evaluator: currentUser.name,
-        evaluatorId: currentUser.id || 'board'
-      });
-      saveDB();
-      alert(`Evaluation saved successfully for ${name}!\nFinal Score: ${score} / 100`);
-      renderDashboard('records');
-    }
-
-    function addNewLeader() {
-      const name = prompt("Enter Leader Full Name & Group (e.g. Omar - PM Group 1):");
-      if (!name) return;
-      const committee = prompt("Enter Committee (PM, PR, HR, Media, Presentation, OC):", "PM").toUpperCase();
-      if (!committeeTechCriteria[committee]) {
-        alert("Invalid committee name!");
-        return;
-      }
-      const pass = prompt("Enter Password for this leader:", "12345");
-      if (!pass) return;
-
-      db.leaders.push({ id: 'leader_' + Date.now(), name, user: 'leader_' + Math.floor(Math.random()*1000), pass, committee });
-      saveDB();
-      renderDashboard('settings');
-    }
-
-    function deleteLeader(idx) {
-      if (db.leaders.length <= 1) {
-        alert("You must keep at least one HR leader.");
-        return;
-      }
-      if (confirm("Are you sure you want to delete this leader account?")) {
-        db.leaders.splice(idx, 1);
-        saveDB();
-        renderDashboard('settings');
-      }
-    }
-
-    function saveSettings() {
-      db.leaders.forEach((l, idx) => {
-        l.name = document.getElementById(`l_name_${idx}`).value;
-        l.committee = document.getElementById(`l_comm_${idx}`).value;
-        l.pass = document.getElementById(`l_pass_${idx}`).value;
-      });
-      saveDB();
-      alert('HR Leaders accounts updated successfully!');
-      renderDashboard('settings');
-    }
-
-    function handleLogout() {
-      currentUser = null;
-      renderLogin();
-    }
-
-    renderLogin();
-  </script>
-</body>
-</html>
