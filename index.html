@@ -28,12 +28,10 @@
 </head>
 <body>
 
-    <div class="card" id="app">
-        <!-- Dynamic Content -->
-    </div>
+    <div class="card" id="app"></div>
 
     <script>
-        let db = JSON.parse(localStorage.getItem('enactus_perfect_v1')) || {
+        let db = JSON.parse(localStorage.getItem('enactus_pure_v1')) || {
             board: { name: "Board Admin", pass: "board123" },
             leaders: [],
             members: [],
@@ -53,7 +51,7 @@
         };
 
         function saveDB() {
-            localStorage.setItem('enactus_perfect_v1', JSON.stringify(db));
+            localStorage.setItem('enactus_pure_v1', JSON.stringify(db));
         }
 
         let loginRole = 'leader';
@@ -107,15 +105,13 @@
                         <h2>Welcome, ${currentUser.name}</h2>
                         <p class="sub">Board Administration (Full Access)</p>
                         
-                        <!-- Change Board Password & Name -->
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
-                            <label style="color:#fbbf24;">Update Board Account:</label>
-                            <input type="text" id="updBoardName" value="${db.board.name}" placeholder="New Board Name">
-                            <input type="password" id="updBoardPass" placeholder="New Password (Leave blank to keep current)">
+                            <label style="color:#fbbf24;">Update Board Account & Password:</label>
+                            <input type="text" id="updBoardName" value="${db.board.name}" placeholder="Board Name">
+                            <input type="password" id="updBoardPass" placeholder="New Password (Optional)">
                             <button onclick="updateBoard()">Save Changes</button>
                         </div>
 
-                        <!-- Add Leader -->
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
                             <label style="color:#fbbf24;">Add New HR Leader:</label>
                             <input type="text" id="lName" placeholder="Leader Full Name">
@@ -126,6 +122,66 @@
                             <button onclick="addLeader()">Add Leader</button>
                         </div>
 
-                        <!-- Members Report -->
                         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
-                            <label style
+                            <label style="color:#fbbf24;">Members Report (${db.members.length}):</label>
+                            <div style="max-height:140px; overflow-y:auto;">
+                                ${db.members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">No members yet.</p>' :
+                                    db.members.map(m => {
+                                        const leader = db.leaders.find(l => l.id === m.leaderId) || { committee: 'N/A' };
+                                        const ev = db.evaluations.find(e => e.memberId === m.id);
+                                        const tier = ev ? getTier(ev.totalScore) : null;
+                                        return `
+                                            <div style="background:#1e293b; padding:8px; margin-bottom:6px; border-radius:6px; font-size:12px;">
+                                                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                                                    <span>${m.name} [${leader.committee}]</span>${ev ? `<span class="badge ${tier.class}">${tier.emoji} ${tier.name} (${ev.totalScore})</span>` : '<span style="color:#f87171;">Not Evaluated</span>'}
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                            </div>
+                        </div>
+
+                        <button onclick="logout()" class="btn-danger">Logout</button>
+                    `;
+                } else {
+                    const members = db.members.filter(m => m.leaderId === currentUser.id);
+                    app.innerHTML = `
+                        <h2>Welcome, ${currentUser.name}</h2>
+                        <p class="sub">Committee: ${currentUser.committee}</p>
+
+                        <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px; border:1px solid #334155;">
+                            <label style="color:#fbbf24;">Add Group Member:</label>
+                            <input type="text" id="newMemName" placeholder="Member Name">
+                            <button onclick="addMember()">Add Member</button>
+                        </div>
+
+                        <label style="color:#fbbf24;">My Group Members (${members.length}):</label>
+                        <div style="max-height:180px; overflow-y:auto; margin-bottom:12px;">
+                            ${members.length === 0 ? '<p style="color:#94a3b8; text-align:center; font-size:12px;">No members yet.</p>' :
+                                members.map(m => {
+                                    const ev = db.evaluations.find(e => e.memberId === m.id);
+                                    const tier = ev ? getTier(ev.totalScore) : null;
+                                    return `
+                                        <div style="background:#0f172a; padding:8px; margin-bottom:6px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+                                            <div>
+                                                <b>${m.name}</b>${ev ? `<span class="badge ${tier.class}" style="margin-left:5px;">${tier.emoji} ${tier.name}</span>` : '<span style="color:#fbbf24; font-size:10px;">[Pending]</span>'}
+                                            </div>
+                                            <div style="display:flex; gap:4px;">
+                                                <button onclick="openEval('${m.id}')" style="width:auto; padding:4px 8px; font-size:11px;">Evaluate</button>
+                                                <button onclick="deleteMember('${m.id}')" style="width:auto; padding:4px 6px; background:#991b1b; color:#fff; font-size:11px;">X</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                        </div>
+
+                        <button onclick="logout()" class="btn-danger">Logout</button>
+                    `;
+                }
+            }
+            else if (currentView === 'eval') {
+                const comm = currentUser.committee;
+                const techList = db.techCriteria[comm] || [];
+                const ev = db.evaluations.find(e => e.memberId === activeMember.id) || { pScores: {}, tScores: {}, pNotes: {}, tNotes: {}, indNotes: '', swot: {s:'', w:''} };
+
+                app.innerHTML =
