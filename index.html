@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena Evaluation System</title>
+    <title>Enactus Qena - Secure Master Portal</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -41,7 +41,14 @@
         .tab-buttons button { background: #334155; color: #fff; flex: 1; }
         .tab-buttons button.active { background: var(--accent); color: var(--bg-main); }
         .crit-box { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+        .role-selector { display: flex; gap: 15px; margin-bottom: 20px; }
+        .role-selector button { flex: 1; background: #334155; color: #fff; }
+        .role-selector button.active { background: var(--accent); color: var(--bg-main); }
     </style>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -49,27 +56,37 @@
         <!-- Auth Screen -->
         <div id="authScreen" class="card">
             <h2>Enactus Qena Portal</h2>
-            <p class="sub">Evaluation System</p>
+            <p class="sub">Evaluation & Member Monitoring System</p>
 
-            <!-- 1. Owner Setup (Username + Password Only) -->
-            <div id="registerBoardForm">
-                <p style="color: var(--accent); font-size: 13px; text-align: center; margin-bottom: 15px;">
-                    Enter your Username and Password to activate the Master Admin account.
-                </p>
-                <label>Username:</label>
-                <input type="text" id="regBoardUser" placeholder="Enter your username (e.g. omar)">
-                <label>Password:</label>
-                <input type="password" id="regBoardPass" placeholder="Enter your password">
-                <button type="button" onclick="registerMasterBoard()">Create Master Admin Account</button>
+            <div class="role-selector">
+                <button id="btnRoleAdmin" class="active" onclick="switchLoginRole('admin')">Master Admin Login</button>
+                <button id="btnRoleLeader" onclick="switchLoginRole('leader')">HR Leader Login</button>
             </div>
 
-            <!-- 2. Standard Login Form -->
-            <div id="loginForm" class="hidden">
-                <label>Username:</label>
-                <input type="text" id="loginUser" placeholder="Enter username">
-                <label>Password:</label>
-                <input type="password" id="loginPass" placeholder="Enter password">
-                <button type="button" onclick="handleLogin()">Login to Portal</button>
+            <!-- Admin Secure Login -->
+            <div id="adminLoginForm">
+                <p style="color: var(--accent); font-size: 12px; text-align: center; margin-bottom: 15px;">
+                    Protected System: Verified Owner Email is required for Full Master Ownership.
+                </p>
+                <label>Verified Owner Email:</label>
+                <input type="email" id="adminEmailInput" placeholder="Omarabdelatya@gmail.com">
+                <label>Admin Username:</label>
+                <input type="text" id="adminUserInput" placeholder="e.g. omar or admin">
+                <label>Admin Password:</label>
+                <input type="password" id="adminPassInput" placeholder="Enter password">
+                <button type="button" onclick="verifyMasterAdmin()">Login as Master Admin</button>
+            </div>
+
+            <!-- HR Leader Login -->
+            <div id="leaderLoginForm" class="hidden">
+                <p style="color: var(--text-sub); font-size: 12px; text-align: center; margin-bottom: 15px;">
+                    Login with credentials provided by the Master Admin.
+                </p>
+                <label>Leader Username:</label>
+                <input type="text" id="leaderUserInput" placeholder="Enter username">
+                <label>Leader Password:</label>
+                <input type="password" id="leaderPassInput" placeholder="Enter password">
+                <button type="button" onclick="verifyLeaderLogin()">Login as HR Leader</button>
             </div>
         </div>
 
@@ -78,7 +95,7 @@
             <div class="nav-header">
                 <div>
                     <h3 id="adminWelcomeTitle" style="margin:0; text-align:left;">Board Admin Dashboard</h3>
-                    <p style="margin:0; font-size:12px; color:var(--text-sub);">Full Administrative Ownership</p>
+                    <p style="margin:0; font-size:12px; color:var(--text-sub);">Exclusive Owner Control & Real-Time Sync</p>
                 </div>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
@@ -86,17 +103,17 @@
             <div class="tab-buttons">
                 <button id="tabBtnLeaders" class="active" onclick="switchAdminTab('leaders')">Manage HR Leaders</button>
                 <button id="tabBtnCriteria" onclick="switchAdminTab('criteria')">Evaluation Criteria</button>
-                <button id="tabBtnEvals" onclick="switchAdminTab('evals')">All Evaluations & SWOT</button>
-                <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Account Security</button>
+                <button id="tabBtnEvals" onclick="switchAdminTab('evals')">Live Evaluations & SWOT</button>
+                <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Security & Password</button>
             </div>
 
-            <!-- Grant HR Access Tab (Simple: Username + Password + Committee) -->
+            <!-- Manage HR Access Tab -->
             <div id="adminSectionLeaders">
-                <h4 style="margin-top:0; text-align:left;">Add HR Leader Account</h4>
+                <h4 style="margin-top:0; text-align:left;">Create HR Leader Credentials</h4>
                 <label>Leader Username:</label>
-                <input type="text" id="newLeaderUser" placeholder="Leader Username (e.g. mohamed)">
+                <input type="text" id="newLeaderUser" placeholder="e.g. mohamed_hr">
                 <label>Leader Password:</label>
-                <input type="password" id="newLeaderPass" placeholder="Set Leader Password">
+                <input type="password" id="newLeaderPass" placeholder="Set password">
                 <label>Assigned Committee / Group:</label>
                 <input type="text" id="newLeaderCommittee" placeholder="e.g. Project Management, HR, Media...">
                 <button type="button" onclick="addLeader()">Create Leader Account</button>
@@ -110,23 +127,23 @@
 
             <!-- Criteria Management Tab -->
             <div id="adminSectionCriteria" class="hidden">
-                <h4 style="margin-top:0; text-align:left;">Manage Evaluation Criteria & Grades</h4>
+                <h4 style="margin-top:0; text-align:left;">Manage Evaluation Criteria</h4>
                 <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid var(--border-color);">
                     <h5 style="margin:0 0 8px 0; color:var(--accent);">Add New Criterion</h5>
-                    <input type="text" id="newCritName" placeholder="Criterion Title (e.g. Commitment)" style="margin-bottom:8px;">
+                    <input type="text" id="newCritName" placeholder="Criterion Name (e.g. Commitment)" style="margin-bottom:8px;">
                     <input type="number" id="newCritMax" placeholder="Max Score (e.g. 30)" style="margin-bottom:8px;">
                     <button type="button" onclick="addCriterion()">Add Criterion</button>
                 </div>
                 <table>
-                    <thead><tr><th>Criterion Title</th><th>Max Score</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Criterion Name</th><th>Max Score</th><th>Action</th></tr></thead>
                     <tbody id="criteriaTableBody"></tbody>
                 </table>
                 <p id="totalCriteriaMaxText" style="margin-top:10px; font-weight:bold; font-size:13px;"></p>
             </div>
 
-            <!-- All Evaluations & SWOT Tab -->
+            <!-- All Live Evaluations Tab -->
             <div id="adminSectionEvals" class="hidden">
-                <h4 style="margin-top:0; text-align:left;">All Members Evaluations & SWOT</h4>
+                <h4 style="margin-top:0; text-align:left;">All Committees Live Evaluations & SWOT</h4>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -145,9 +162,9 @@
                 </div>
             </div>
 
-            <!-- Account Security Tab -->
+            <!-- Security Tab -->
             <div id="adminSectionSecurity" class="hidden">
-                <h4 style="margin-top:0; text-align:left;">Change Admin Password</h4>
+                <h4 style="margin-top:0; text-align:left;">Change Master Admin Password</h4>
                 <label>New Password:</label>
                 <input type="password" id="changeBoardPass" placeholder="Enter new password">
                 <button type="button" onclick="updateBoardPassword()">Update Password</button>
@@ -167,7 +184,7 @@
             <div style="background:#0f172a; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid var(--border-color);">
                 <h4 style="margin:0 0 10px 0; text-align:left;">Add Member to My Group</h4>
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="newMemberName" placeholder="Enter Member Full Name" style="margin-bottom:0;">
+                    <input type="text" id="newMemberName" placeholder="Member Full Name" style="margin-bottom:0;">
                     <button type="button" onclick="addMemberToCommittee()" style="width:150px;">Add Member</button>
                 </div>
             </div>
@@ -180,10 +197,10 @@
 
             <div id="leaderCriteriaInputsContainer"></div>
 
-            <label>SWOT Analysis (Strengths, Weaknesses, Opportunities, Threats):</label>
-            <textarea id="evalSwot" rows="3" placeholder="Write comprehensive SWOT insights for this member..."></textarea>
+            <label>SWOT Analysis:</label>
+            <textarea id="evalSwot" rows="3" placeholder="Write SWOT insights for this member..."></textarea>
 
-            <button type="button" onclick="submitMemberEvaluation()">Submit & Save Evaluation</button>
+            <button type="button" onclick="submitMemberEvaluation()">Submit Evaluation</button>
 
             <h4 style="margin-top:25px; text-align:left;">Saved Group Evaluations</h4>
             <table>
@@ -194,18 +211,32 @@
     </div>
 
     <script>
-        const KEY = 'enactus_direct_v700';
+        // --- Verified Owner Email & System Configuration ---
+        const MASTER_EMAIL = "omarabdelatya@gmail.com";
 
-        function loadData() {
+        // Optional Cloud DB config placeholder
+        const firebaseConfig = {
+            apiKey: "AIzaSy_DEMO_KEY",
+            authDomain: "enactus-qena-demo.firebaseapp.com",
+            databaseURL: "https://enactus-qena-demo-default-rtdb.firebaseio.com",
+            projectId: "enactus-qena-demo",
+            storageBucket: "enactus-qena-demo.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:demo"
+        };
+
+        const LOCAL_STORAGE_KEY = 'enactus_omarabdelatya_v1';
+
+        function loadLocalData() {
             try {
-                return JSON.parse(localStorage.getItem(KEY)) || null;
+                return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || null;
             } catch(e) {
                 return null;
             }
         }
 
-        let db = loadData() || {
-            masterBoard: null,
+        let db = loadLocalData() || {
+            masterBoard: { email: MASTER_EMAIL, username: "admin", password: "123" },
             leaders: [],
             members: [],
             criteria: [
@@ -218,42 +249,50 @@
 
         let currentUser = null;
 
-        window.addEventListener('load', function() {
-            if (db && db.masterBoard) {
-                document.getElementById('registerBoardForm').classList.add('hidden');
-                document.getElementById('loginForm').classList.remove('hidden');
+        function saveState() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
+            refreshActiveDashboard();
+        }
+
+        function switchLoginRole(role) {
+            if(role === 'admin') {
+                document.getElementById('btnRoleAdmin').classList.add('active');
+                document.getElementById('btnRoleLeader').classList.remove('active');
+                document.getElementById('adminLoginForm').classList.remove('hidden');
+                document.getElementById('leaderLoginForm').classList.add('hidden');
             } else {
-                document.getElementById('registerBoardForm').classList.remove('hidden');
-                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('btnRoleLeader').classList.add('active');
+                document.getElementById('btnRoleAdmin').classList.remove('active');
+                document.getElementById('leaderLoginForm').classList.remove('hidden');
+                document.getElementById('adminLoginForm').classList.add('hidden');
             }
-        });
+        }
 
-        function registerMasterBoard() {
-            const username = document.getElementById('regBoardUser').value.trim();
-            const password = document.getElementById('regBoardPass').value.trim();
+        function verifyMasterAdmin() {
+            const email = document.getElementById('adminEmailInput').value.trim().toLowerCase();
+            const user = document.getElementById('adminUserInput').value.trim();
+            const pass = document.getElementById('adminPassInput').value.trim();
 
-            if(!username || !password) {
-                alert('Please enter a Username and Password.');
+            if (email !== MASTER_EMAIL.toLowerCase()) {
+                alert('Access Denied: Only the verified owner email (Omarabdelatya@gmail.com) can access Master Board Administration!');
                 return;
             }
 
-            db.masterBoard = { username: username, password: password };
-            localStorage.setItem(KEY, JSON.stringify(db));
-            alert('Master Admin Account Created Successfully!');
-            
-            currentUser = { role: 'admin', name: db.masterBoard.username };
+            if (!db.masterBoard) {
+                db.masterBoard = { email: MASTER_EMAIL, username: user, password: pass };
+                saveState();
+            } else if (pass !== db.masterBoard.password) {
+                alert('Access Denied: Invalid Master Admin Password!');
+                return;
+            }
+
+            currentUser = { role: 'admin', name: user || "Master Admin" };
             launchAdminDashboard();
         }
 
-        function handleLogin() {
-            const user = document.getElementById('loginUser').value.trim();
-            const pass = document.getElementById('loginPass').value.trim();
-
-            if(db.masterBoard && user === db.masterBoard.username && pass === db.masterBoard.password) {
-                currentUser = { role: 'admin', name: db.masterBoard.username };
-                launchAdminDashboard();
-                return;
-            }
+        function verifyLeaderLogin() {
+            const user = document.getElementById('leaderUserInput').value.trim();
+            const pass = document.getElementById('leaderPassInput').value.trim();
 
             const leader = db.leaders.find(l => l.username === user && l.password === pass);
             if(leader) {
@@ -262,7 +301,7 @@
                 return;
             }
 
-            alert('Access Denied: Invalid username or password!');
+            alert('Access Denied: Incorrect HR Leader credentials. Please ask Board Admin.');
         }
 
         function logout() {
@@ -270,17 +309,30 @@
             document.getElementById('authScreen').classList.remove('hidden');
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('leaderDashboard').classList.add('hidden');
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
+            document.getElementById('adminEmailInput').value = '';
+            document.getElementById('adminUserInput').value = '';
+            document.getElementById('adminPassInput').value = '';
+            document.getElementById('leaderUserInput').value = '';
+            document.getElementById('leaderPassInput').value = '';
+        }
+
+        function refreshActiveDashboard() {
+            if (currentUser && currentUser.role === 'admin') {
+                renderLeadersTable();
+                renderCriteriaTable();
+                renderAdminEvalsTable();
+            } else if (currentUser && currentUser.role === 'leader') {
+                renderCommitteeMembersDropdown();
+                renderLeaderCriteriaInputs();
+                renderLeaderEvalsTable();
+            }
         }
 
         function launchAdminDashboard() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
-            document.getElementById('adminWelcomeTitle').innerText = `Board Admin: ${currentUser.name}`;
-            renderLeadersTable();
-            renderCriteriaTable();
-            renderAdminEvalsTable();
+            document.getElementById('adminWelcomeTitle').innerText = `Board Admin: ${currentUser.name} (${MASTER_EMAIL})`;
+            refreshActiveDashboard();
         }
 
         function switchAdminTab(tab) {
@@ -300,11 +352,9 @@
             } else if(tab === 'criteria') {
                 document.getElementById('tabBtnCriteria').classList.add('active');
                 document.getElementById('adminSectionCriteria').classList.remove('hidden');
-                renderCriteriaTable();
             } else if(tab === 'evals') {
                 document.getElementById('tabBtnEvals').classList.add('active');
                 document.getElementById('adminSectionEvals').classList.remove('hidden');
-                renderAdminEvalsTable();
             } else if(tab === 'security') {
                 document.getElementById('tabBtnSecurity').classList.add('active');
                 document.getElementById('adminSectionSecurity').classList.remove('hidden');
@@ -312,245 +362,4 @@
         }
 
         function addLeader() {
-            const username = document.getElementById('newLeaderUser').value.trim();
-            const password = document.getElementById('newLeaderPass').value.trim();
-            const committee = document.getElementById('newLeaderCommittee').value.trim();
-
-            if(!username || !password || !committee) {
-                alert('Please fill all fields.');
-                return;
-            }
-            if(username === db.masterBoard.username || db.leaders.some(l => l.username === username)) {
-                alert('Username already in use!');
-                return;
-            }
-
-            db.leaders.push({ username, password, committee, name: username });
-            localStorage.setItem(KEY, JSON.stringify(db));
-
-            document.getElementById('newLeaderUser').value = '';
-            document.getElementById('newLeaderPass').value = '';
-            document.getElementById('newLeaderCommittee').value = '';
-            renderLeadersTable();
-            alert('HR Leader account created successfully!');
-        }
-
-        function renderLeadersTable() {
-            const tbody = document.getElementById('leadersTableBody');
-            tbody.innerHTML = '';
-            if(db.leaders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-sub);">No leaders added yet.</td></tr>';
-                return;
-            }
-            db.leaders.forEach((l, idx) => {
-                tbody.innerHTML += `<tr><td>${l.username}</td><td>${l.committee}</td><td><button type="button" onclick="deleteLeader(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td></tr>`;
-            });
-        }
-
-        function deleteLeader(idx) {
-            db.leaders.splice(idx, 1);
-            localStorage.setItem(KEY, JSON.stringify(db));
-            renderLeadersTable();
-        }
-
-        function addCriterion() {
-            const name = document.getElementById('newCritName').value.trim();
-            const max = parseInt(document.getElementById('newCritMax').value);
-            if(!name || isNaN(max) || max <= 0) {
-                alert('Please enter a valid title and positive max score.');
-                return;
-            }
-            db.criteria.push({ name, max });
-            localStorage.setItem(KEY, JSON.stringify(db));
-            document.getElementById('newCritName').value = '';
-            document.getElementById('newCritMax').value = '';
-            renderCriteriaTable();
-        }
-
-        function renderCriteriaTable() {
-            const tbody = document.getElementById('criteriaTableBody');
-            tbody.innerHTML = '';
-            let totalMax = 0;
-            db.criteria.forEach((c, idx) => {
-                totalMax += c.max;
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${c.name}</td>
-                        <td>${c.max}</td>
-                        <td><button type="button" onclick="deleteCriterion(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td>
-                    </tr>`;
-            });
-            document.getElementById('totalCriteriaMaxText').innerText = `Total Criteria Score Sum: ${totalMax} / 100`;
-        }
-
-        function deleteCriterion(idx) {
-            db.criteria.splice(idx, 1);
-            localStorage.setItem(KEY, JSON.stringify(db));
-            renderCriteriaTable();
-        }
-
-        function renderAdminEvalsTable() {
-            const tbody = document.getElementById('adminEvalsTableBody');
-            tbody.innerHTML = '';
-            if(db.evaluations.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-sub);">No evaluations recorded yet.</td></tr>';
-                return;
-            }
-            db.evaluations.forEach((e, idx) => {
-                let notesText = e.criteriaNotes ? e.criteriaNotes.join(' | ') : '';
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${e.memberName}</b></td>
-                        <td>${e.committee}</td>
-                        <td>${e.leaderName}</td>
-                        <td><b>${e.totalScore} / 100</b></td>
-                        <td><span class="badge ${e.tierClass}">${e.tier}</span></td>
-                        <td style="font-size:11px;"><b>SWOT:</b> ${e.swot || 'N/A'}<br><span style="color:var(--text-sub);"><b>Notes:</b> ${notesText}</span></td>
-                        <td><button type="button" onclick="deleteEval(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td>
-                    </tr>`;
-            });
-        }
-
-        function deleteEval(idx) {
-            db.evaluations.splice(idx, 1);
-            localStorage.setItem(KEY, JSON.stringify(db));
-            renderAdminEvalsTable();
-        }
-
-        function updateBoardPassword() {
-            const newPass = document.getElementById('changeBoardPass').value.trim();
-            if(!newPass) { alert('Please enter new password.'); return; }
-            db.masterBoard.password = newPass;
-            localStorage.setItem(KEY, JSON.stringify(db));
-            document.getElementById('changeBoardPass').value = '';
-            alert('Password updated successfully!');
-        }
-
-        function launchLeaderDashboard() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('leaderDashboard').classList.remove('hidden');
-            document.getElementById('leaderDashTitle').innerText = `${currentUser.username} (HR Leader)`;
-            document.getElementById('leaderSubInfo').innerText = `Committee: ${currentUser.committee}`;
-            renderCommitteeMembersDropdown();
-            renderLeaderCriteriaInputs();
-            renderLeaderEvalsTable();
-        }
-
-        function addMemberToCommittee() {
-            const name = document.getElementById('newMemberName').value.trim();
-            if(!name) { alert('Please enter member name.'); return; }
-
-            db.members.push({
-                name,
-                committee: currentUser.committee,
-                leaderName: currentUser.username
-            });
-            localStorage.setItem(KEY, JSON.stringify(db));
-            document.getElementById('newMemberName').value = '';
-            renderCommitteeMembersDropdown();
-            alert(`Member "${name}" added successfully!`);
-        }
-
-        function renderCommitteeMembersDropdown() {
-            const select = document.getElementById('selectCommitteeMember');
-            select.innerHTML = '<option value="">-- Choose Member --</option>';
-            const myMembers = db.members.filter(m => m.leaderName === currentUser.username);
-            myMembers.forEach(m => {
-                select.innerHTML += `<option value="${m.name}">${m.name}</option>`;
-            });
-        }
-
-        function renderLeaderCriteriaInputs() {
-            const container = document.getElementById('leaderCriteriaInputsContainer');
-            container.innerHTML = '';
-            db.criteria.forEach((c, idx) => {
-                container.innerHTML += `
-                    <div class="crit-box">
-                        <label>${c.name} (Max: ${c.max}):</label>
-                        <input type="number" id="critScore_${idx}" min="0" max="${c.max}" placeholder="Score out of ${c.max}">
-                        <input type="text" id="critNote_${idx}" placeholder="Optional note for this criterion...">
-                    </div>`;
-            });
-        }
-
-        function submitMemberEvaluation() {
-            const memberName = document.getElementById('selectCommitteeMember').value;
-            const swot = document.getElementById('evalSwot').value.trim();
-            if(!memberName) { alert('Please select a member to evaluate.'); return; }
-
-            let totalScore = 0;
-            let criteriaNotes = [];
-
-            for(let i=0; i<db.criteria.length; i++) {
-                const val = parseInt(document.getElementById(`critScore_${i}`).value);
-                const note = document.getElementById(`critNote_${i}`).value.trim();
-
-                if(isNaN(val) || val < 0) {
-                    alert(`Please enter a valid score for "${db.criteria[i].name}".`);
-                    return;
-                }
-                if(val > db.criteria[i].max) {
-                    alert(`Score for "${db.criteria[i].name}" cannot exceed max (${db.criteria[i].max}).`);
-                    return;
-                }
-                totalScore += val;
-                if(note) criteriaNotes.push(`${db.criteria[i].name}: ${note}`);
-            }
-
-            let tier = 'Warning';
-            let tierClass = 'tier-warning';
-            if (totalScore >= 95) { tier = 'Best'; tierClass = 'tier-best'; }
-            else if (totalScore >= 85) { tier = 'Gold'; tierClass = 'tier-gold'; }
-            else if (totalScore >= 65) { tier = 'Bronze'; tierClass = 'tier-bronze'; }
-            else if (totalScore >= 55) { tier = 'Silver'; tierClass = 'tier-silver'; }
-
-            db.evaluations.push({
-                memberName,
-                committee: currentUser.committee,
-                leaderName: currentUser.username,
-                totalScore,
-                tier,
-                tierClass,
-                swot,
-                criteriaNotes,
-                date: new Date().toLocaleDateString('en-US')
-            });
-
-            localStorage.setItem(KEY, JSON.stringify(db));
-            alert('Evaluation submitted successfully!');
-            document.getElementById('selectCommitteeMember').value = '';
-            document.getElementById('evalSwot').value = '';
-            db.criteria.forEach((_, idx) => {
-                document.getElementById(`critScore_${idx}`).value = '';
-                document.getElementById(`critNote_${idx}`).value = '';
-            });
-            renderLeaderEvalsTable();
-        }
-
-        function renderLeaderEvalsTable() {
-            const tbody = document.getElementById('leaderEvalsTableBody');
-            tbody.innerHTML = '';
-            const myEvals = db.evaluations.filter(e => e.leaderName === currentUser.username);
-            if(myEvals.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-sub);">No evaluations recorded yet.</td></tr>';
-                return;
-            }
-            myEvals.forEach((e, idx) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${e.memberName}</b></td>
-                        <td><b>${e.totalScore} / 100</b></td>
-                        <td><span class="badge ${e.tierClass}">${e.tier}</span></td>
-                        <td><button type="button" onclick="deleteMyEval(${idx})" style="padding:4px 8px; background:var(--danger); width:auto; font-size:11px;">Delete</button></td>
-                    </tr>`;
-            });
-        }
-
-        function deleteMyEval(idx) {
-            db.evaluations.splice(idx, 1);
-            localStorage.setItem(KEY, JSON.stringify(db));
-            renderLeaderEvalsTable();
-        }
-    </script>
-</body>
-</html>
+            const username = document
