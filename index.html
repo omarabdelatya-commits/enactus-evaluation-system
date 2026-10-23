@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena System</title>
+    <title>Enactus Qena System 2026</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -31,4 +31,149 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { color: var(--accent); }
-        .badge
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .tier-warning { background: #7f1d1d; color: #f87171; }
+        .tier-silver { background: #334155; color: #cbd5e1; }
+        .tier-bronze { background: #78350f; color: #fcd34d; }
+        .tier-gold { background: #713f12; color: #fde047; }
+        .tier-best { background: #065f46; color: #34d399; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-buttons button { background: #334155; color: #fff; flex: 1; }
+        .tab-buttons button.active { background: var(--accent); color: var(--bg-main); }
+        .crit-box { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Auth Screen -->
+        <div id="authScreen" class="card">
+            <h2>Enactus Qena System 2026</h2>
+            <p class="sub">Evaluation & Committee Management</p>
+
+            <!-- Owner Registration -->
+            <div id="registerBoardForm">
+                <p style="color: var(--accent); font-size: 13px; text-align: center; margin-bottom: 15px;">
+                    Welcome Owner! Create your Master Board Admin account below to activate the system.
+                </p>
+                <label>Your Full Name:</label>
+                <input type="text" id="regBoardName" placeholder="e.g. Omar Abdel-Aati">
+                <label>Choose Admin Username:</label>
+                <input type="text" id="regBoardUser" placeholder="Choose your username">
+                <label>Choose Admin Password:</label>
+                <input type="password" id="regBoardPass" placeholder="Choose your password">
+                <button onclick="registerMasterBoard()">Create Master Admin Account</button>
+            </div>
+
+            <!-- Standard Login -->
+            <div id="loginForm" class="hidden">
+                <label>Username:</label>
+                <input type="text" id="loginUser" placeholder="Enter username">
+                <label>Password:</label>
+                <input type="password" id="loginPass" placeholder="Enter password">
+                <button onclick="handleLogin()">Login to Portal</button>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminDashboard" class="card hidden">
+            <div class="nav-header">
+                <div>
+                    <h3 id="adminWelcomeTitle" style="margin:0; text-align:left;">Board Admin Dashboard</h3>
+                    <p style="margin:0; font-size:12px; color:var(--text-sub);">Full Administrative Ownership</p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="tab-buttons">
+                <button id="tabBtnLeaders" class="active" onclick="switchAdminTab('leaders')">Manage HR Leaders</button>
+                <button id="tabBtnCriteria" onclick="switchAdminTab('criteria')">Evaluation Criteria</button>
+                <button id="tabBtnEvals" onclick="switchAdminTab('evals')">All Evaluations & SWOT</button>
+                <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Account Security</button>
+            </div>
+
+            <!-- Manage Leaders Tab -->
+            <div id="adminSectionLeaders">
+                <h4 style="margin-top:0; text-align:left;">Grant HR Leader Access</h4>
+                <label>Leader Full Name:</label>
+                <input type="text" id="newLeaderName" placeholder="e.g. Mohamed Ali">
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;"><label>Set Username:</label><input type="text" id="newLeaderUser" placeholder="Username"></div>
+                    <div style="flex:1;"><label>Set Password:</label><input type="password" id="newLeaderPass" placeholder="Password"></div>
+                </div>
+                <label>Assigned Committee / Group:</label>
+                <input type="text" id="newLeaderCommittee" placeholder="e.g. Project Management, HR, Media...">
+                <button onclick="addLeader()">Create Leader Account</button>
+
+                <h4 style="margin-top:25px; text-align:left;">Active HR Leaders</h4>
+                <table>
+                    <thead><tr><th>Name</th><th>Username</th><th>Committee</th><th>Action</th></tr></thead>
+                    <tbody id="leadersTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Criteria Tab -->
+            <div id="adminSectionCriteria" class="hidden">
+                <h4 style="margin-top:0; text-align:left;">Manage Evaluation Criteria</h4>
+                <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid var(--border-color);">
+                    <h5 style="margin:0 0 8px 0; color:var(--accent);">Add New Criterion</h5>
+                    <input type="text" id="newCritName" placeholder="Criterion Title (e.g. Commitment)" style="margin-bottom:8px;">
+                    <input type="number" id="newCritMax" placeholder="Max Score (e.g. 30)" style="margin-bottom:8px;">
+                    <button onclick="addCriterion()">Add Criterion</button>
+                </div>
+                <table>
+                    <thead><tr><th>Criterion Name</th><th>Max Score</th><th>Action</th></tr></thead>
+                    <tbody id="criteriaTableBody"></tbody>
+                </table>
+                <p id="totalCriteriaMaxText" style="margin-top:10px; font-weight:bold; font-size:13px;"></p>
+            </div>
+
+            <!-- All Evals Tab -->
+            <div id="adminSectionEvals" class="hidden">
+                <h4 style="margin-top:0; text-align:left;">All Committees Evaluations & SWOT</h4>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Committee</th>
+                                <th>Leader</th>
+                                <th>Score</th>
+                                <th>Tier</th>
+                                <th>SWOT & Notes</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminEvalsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="adminSectionSecurity" class="hidden">
+                <h4 style="margin-top:0; text-align:left;">Change Admin Password</h4>
+                <label>New Password:</label>
+                <input type="password" id="changeBoardPass" placeholder="Enter new password">
+                <button onclick="updateBoardPassword()">Update Password</button>
+            </div>
+        </div>
+
+        <!-- HR Leader Dashboard -->
+        <div id="leaderDashboard" class="card hidden">
+            <div class="nav-header">
+                <div>
+                    <h3 id="leaderDashTitle" style="margin:0; text-align:left;">HR Leader Portal</h3>
+                    <p id="leaderSubInfo" style="margin:2px 0 0 0; font-size:12px; color:var(--text-sub);"></p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+
+            <div style="background:#0f172a; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid var(--border-color);">
+                <h4 style="margin:0 0 10px 0; text-align:left;">Add Member to My Group</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="newMemberName" placeholder="Enter Member Full Name" style="margin-bottom:0;">
+                    <button onclick="addMemberToCommittee()" style="width:150px;">Add Member</button>
+                </div>
+            </div>
+
+            <h4 style="text-
