@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enactus Qena - Secure Master Portal</title>
+    <title>Enactus Qena Portal</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -40,15 +40,11 @@
         .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-buttons button { background: #334155; color: #fff; flex: 1; }
         .tab-buttons button.active { background: var(--accent); color: var(--bg-main); }
-        .crit-box { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border-color); }
-        .role-selector { display: flex; gap: 15px; margin-bottom: 20px; }
+        .role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
         .role-selector button { flex: 1; background: #334155; color: #fff; }
         .role-selector button.active { background: var(--accent); color: var(--bg-main); }
+        .crit-box { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border-color); }
     </style>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -65,13 +61,10 @@
 
             <!-- Admin Secure Login -->
             <div id="adminLoginForm">
-                <p style="color: var(--accent); font-size: 12px; text-align: center; margin-bottom: 15px;">
-                    Protected System: Verified Owner Email is required for Full Master Ownership.
-                </p>
-                <label>Verified Owner Email:</label>
-                <input type="email" id="adminEmailInput" placeholder="Omarabdelatya@gmail.com">
+                <label>Owner Email:</label>
+                <input type="email" id="adminEmailInput" placeholder="Enter owner email">
                 <label>Admin Username:</label>
-                <input type="text" id="adminUserInput" placeholder="e.g. omar or admin">
+                <input type="text" id="adminUserInput" placeholder="Enter username">
                 <label>Admin Password:</label>
                 <input type="password" id="adminPassInput" placeholder="Enter password">
                 <button type="button" onclick="verifyMasterAdmin()">Login as Master Admin</button>
@@ -79,9 +72,6 @@
 
             <!-- HR Leader Login -->
             <div id="leaderLoginForm" class="hidden">
-                <p style="color: var(--text-sub); font-size: 12px; text-align: center; margin-bottom: 15px;">
-                    Login with credentials provided by the Master Admin.
-                </p>
                 <label>Leader Username:</label>
                 <input type="text" id="leaderUserInput" placeholder="Enter username">
                 <label>Leader Password:</label>
@@ -95,7 +85,7 @@
             <div class="nav-header">
                 <div>
                     <h3 id="adminWelcomeTitle" style="margin:0; text-align:left;">Board Admin Dashboard</h3>
-                    <p style="margin:0; font-size:12px; color:var(--text-sub);">Exclusive Owner Control & Real-Time Sync</p>
+                    <p style="margin:0; font-size:12px; color:var(--text-sub);">Master Ownership & Live Control</p>
                 </div>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
@@ -104,14 +94,14 @@
                 <button id="tabBtnLeaders" class="active" onclick="switchAdminTab('leaders')">Manage HR Leaders</button>
                 <button id="tabBtnCriteria" onclick="switchAdminTab('criteria')">Evaluation Criteria</button>
                 <button id="tabBtnEvals" onclick="switchAdminTab('evals')">Live Evaluations & SWOT</button>
-                <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Security & Password</button>
+                <button id="tabBtnSecurity" onclick="switchAdminTab('security')">Account Security</button>
             </div>
 
             <!-- Manage HR Access Tab -->
             <div id="adminSectionLeaders">
-                <h4 style="margin-top:0; text-align:left;">Create HR Leader Credentials</h4>
+                <h4 style="margin-top:0; text-align:left;">Add HR Leader Account</h4>
                 <label>Leader Username:</label>
-                <input type="text" id="newLeaderUser" placeholder="e.g. mohamed_hr">
+                <input type="text" id="newLeaderUser" placeholder="Username">
                 <label>Leader Password:</label>
                 <input type="password" id="newLeaderPass" placeholder="Set password">
                 <label>Assigned Committee / Group:</label>
@@ -165,7 +155,7 @@
             <!-- Security Tab -->
             <div id="adminSectionSecurity" class="hidden">
                 <h4 style="margin-top:0; text-align:left;">Change Master Admin Password</h4>
-                <label>New Password:</label>
+                <label>New Admin Password:</label>
                 <input type="password" id="changeBoardPass" placeholder="Enter new password">
                 <button type="button" onclick="updateBoardPassword()">Update Password</button>
             </div>
@@ -211,21 +201,9 @@
     </div>
 
     <script>
-        // --- Verified Owner Email & System Configuration ---
-        const MASTER_EMAIL = "omarabdelatya@gmail.com";
-
-        // Optional Cloud DB config placeholder
-        const firebaseConfig = {
-            apiKey: "AIzaSy_DEMO_KEY",
-            authDomain: "enactus-qena-demo.firebaseapp.com",
-            databaseURL: "https://enactus-qena-demo-default-rtdb.firebaseio.com",
-            projectId: "enactus-qena-demo",
-            storageBucket: "enactus-qena-demo.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:demo"
-        };
-
-        const LOCAL_STORAGE_KEY = 'enactus_omarabdelatya_v1';
+        // Verified Secret Email Key
+        const SECRET_OWNER_EMAIL = "omarabdelatya@gmail.com";
+        const LOCAL_STORAGE_KEY = 'enactus_qena_final_v900';
 
         function loadLocalData() {
             try {
@@ -236,7 +214,7 @@
         }
 
         let db = loadLocalData() || {
-            masterBoard: { email: MASTER_EMAIL, username: "admin", password: "123" },
+            masterAdmin: null,
             leaders: [],
             members: [],
             criteria: [
@@ -255,111 +233,15 @@
         }
 
         function switchLoginRole(role) {
+            const btnAdmin = document.getElementById('btnRoleAdmin');
+            const btnLeader = document.getElementById('btnRoleLeader');
+            const adminForm = document.getElementById('adminLoginForm');
+            const leaderForm = document.getElementById('leaderLoginForm');
+
             if(role === 'admin') {
-                document.getElementById('btnRoleAdmin').classList.add('active');
-                document.getElementById('btnRoleLeader').classList.remove('active');
-                document.getElementById('adminLoginForm').classList.remove('hidden');
-                document.getElementById('leaderLoginForm').classList.add('hidden');
+                btnAdmin.classList.add('active');
+                btnLeader.classList.remove('active');
+                adminForm.classList.remove('hidden');
+                leaderForm.classList.add('hidden');
             } else {
-                document.getElementById('btnRoleLeader').classList.add('active');
-                document.getElementById('btnRoleAdmin').classList.remove('active');
-                document.getElementById('leaderLoginForm').classList.remove('hidden');
-                document.getElementById('adminLoginForm').classList.add('hidden');
-            }
-        }
-
-        function verifyMasterAdmin() {
-            const email = document.getElementById('adminEmailInput').value.trim().toLowerCase();
-            const user = document.getElementById('adminUserInput').value.trim();
-            const pass = document.getElementById('adminPassInput').value.trim();
-
-            if (email !== MASTER_EMAIL.toLowerCase()) {
-                alert('Access Denied: Only the verified owner email (Omarabdelatya@gmail.com) can access Master Board Administration!');
-                return;
-            }
-
-            if (!db.masterBoard) {
-                db.masterBoard = { email: MASTER_EMAIL, username: user, password: pass };
-                saveState();
-            } else if (pass !== db.masterBoard.password) {
-                alert('Access Denied: Invalid Master Admin Password!');
-                return;
-            }
-
-            currentUser = { role: 'admin', name: user || "Master Admin" };
-            launchAdminDashboard();
-        }
-
-        function verifyLeaderLogin() {
-            const user = document.getElementById('leaderUserInput').value.trim();
-            const pass = document.getElementById('leaderPassInput').value.trim();
-
-            const leader = db.leaders.find(l => l.username === user && l.password === pass);
-            if(leader) {
-                currentUser = { role: 'leader', ...leader };
-                launchLeaderDashboard();
-                return;
-            }
-
-            alert('Access Denied: Incorrect HR Leader credentials. Please ask Board Admin.');
-        }
-
-        function logout() {
-            currentUser = null;
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('adminDashboard').classList.add('hidden');
-            document.getElementById('leaderDashboard').classList.add('hidden');
-            document.getElementById('adminEmailInput').value = '';
-            document.getElementById('adminUserInput').value = '';
-            document.getElementById('adminPassInput').value = '';
-            document.getElementById('leaderUserInput').value = '';
-            document.getElementById('leaderPassInput').value = '';
-        }
-
-        function refreshActiveDashboard() {
-            if (currentUser && currentUser.role === 'admin') {
-                renderLeadersTable();
-                renderCriteriaTable();
-                renderAdminEvalsTable();
-            } else if (currentUser && currentUser.role === 'leader') {
-                renderCommitteeMembersDropdown();
-                renderLeaderCriteriaInputs();
-                renderLeaderEvalsTable();
-            }
-        }
-
-        function launchAdminDashboard() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.remove('hidden');
-            document.getElementById('adminWelcomeTitle').innerText = `Board Admin: ${currentUser.name} (${MASTER_EMAIL})`;
-            refreshActiveDashboard();
-        }
-
-        function switchAdminTab(tab) {
-            document.getElementById('tabBtnLeaders').classList.remove('active');
-            document.getElementById('tabBtnCriteria').classList.remove('active');
-            document.getElementById('tabBtnEvals').classList.remove('active');
-            document.getElementById('tabBtnSecurity').classList.remove('active');
-
-            document.getElementById('adminSectionLeaders').classList.add('hidden');
-            document.getElementById('adminSectionCriteria').classList.add('hidden');
-            document.getElementById('adminSectionEvals').classList.add('hidden');
-            document.getElementById('adminSectionSecurity').classList.add('hidden');
-
-            if(tab === 'leaders') {
-                document.getElementById('tabBtnLeaders').classList.add('active');
-                document.getElementById('adminSectionLeaders').classList.remove('hidden');
-            } else if(tab === 'criteria') {
-                document.getElementById('tabBtnCriteria').classList.add('active');
-                document.getElementById('adminSectionCriteria').classList.remove('hidden');
-            } else if(tab === 'evals') {
-                document.getElementById('tabBtnEvals').classList.add('active');
-                document.getElementById('adminSectionEvals').classList.remove('hidden');
-            } else if(tab === 'security') {
-                document.getElementById('tabBtnSecurity').classList.add('active');
-                document.getElementById('adminSectionSecurity').classList.remove('hidden');
-            }
-        }
-
-        function addLeader() {
-            const username = document
+                btnLeader.classList.add('active');
