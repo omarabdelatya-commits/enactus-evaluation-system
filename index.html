@@ -6,28 +6,78 @@
   <title>Enactus Qena Evaluation System</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans">
-  <div id="app" class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center"></div>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex items-center justify-center p-4">
+
+  <div id="app" class="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-200">
+    <!-- App will load here -->
+  </div>
 
   <script>
-    let db = JSON.parse(localStorage.getItem('enactus_cloud_db_v2')) || {
+    let db = JSON.parse(localStorage.getItem('enactus_db_v4')) || {
       leaders: [
-        { id: "pm_leader_1", name: "Ahmed (PM HR Leader 1)", pass: "pm123", committee: "PM" },
-        { id: "pm_leader_2", name: "Sara (PM HR Leader 2)", pass: "pm456", committee: "PM" },
-        { id: "pr_leader_1", name: "Mohamed (PR HR Leader)", pass: "pr123", committee: "PR" },
-        { id: "hr_leader_1", name: "Nour (HR Committee Leader)", pass: "hr123", committee: "HR" },
-        { id: "media_leader_1", name: "Ziad (Media Leader)", pass: "media123", committee: "Media" },
-        { id: "pres_leader_1", name: "Salma (Presentation Leader)", pass: "pres123", committee: "Presentation" },
-        { id: "oc_leader_1", name: "Youssef (OC Leader)", pass: "oc123", committee: "OC" }
+        { id: "omar_pm", name: "Omar (PM Leader - Group 1)", user: "omar_pm", pass: "omar123", committee: "PM" },
+        { id: "mohamed_pm", name: "Mohamed (PM Leader - Group 2)", user: "mohamed_pm", pass: "mohamed123", committee: "PM" },
+        { id: "ali_pr", name: "Ali (PR Leader)", user: "ali_pr", pass: "ali123", committee: "PR" },
+        { id: "nour_hr", name: "Nour (HR Leader)", user: "nour_hr", pass: "nour123", committee: "HR" },
+        { id: "ziad_media", name: "Ziad (Media Leader)", user: "ziad_media", pass: "ziad123", committee: "Media" },
+        { id: "salma_pres", name: "Salma (Presentation Leader)", user: "salma_pres", pass: "salma123", committee: "Presentation" },
+        { id: "youssef_oc", name: "Youssef (OC Leader)", user: "youssef_oc", pass: "youssef123", committee: "OC" }
       ],
       boardPass: "board123",
       evaluations: []
     };
 
     function saveDB() {
-      localStorage.setItem('enactus_cloud_db_v2', JSON.stringify(db));
+      localStorage.setItem('enactus_db_v4', JSON.stringify(db));
     }
 
-    const committees = {
-      PM: { name: "PM Committee (Project Management)", techCriteria: ["Research & Problem Identification (10)", "Research Quality & Validation (10)", "Project Planning & Documentation (10)", "Task Execution & Deliverables (10)", "Critical Thinking & Problem Solving (10)", "Project Development & Practical Contribution (10)"] },
-      PR: { name: "PR Committee (Public Relations)", techCriteria: ["Communication & Negotiation (10)", "Sponsorship Research & Prospecting (10
+    let activeTab = 'leader';
+    let currentUser = null;
+
+    function renderLogin() {
+      const app = document.getElementById('app');
+      app.className = "max-w-md w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-200";
+      
+      app.innerHTML = `
+        <div class="mb-6 text-center">
+          <h1 class="text-2xl font-extrabold text-slate-900">Enactus Qena</h1>
+          <p class="text-slate-500 text-sm">Evaluation System Login</p>
+        </div>
+
+        <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-6 font-bold text-sm">
+          <button onclick="switchTab('leader')" class="py-2.5 rounded-lg transition ${activeTab === 'leader' ? 'bg-slate-900 text-white shadow' : 'text-slate-600'}">
+            HR Leader Login
+          </button>
+          <button onclick="switchTab('board')" class="py-2.5 rounded-lg transition ${activeTab === 'board' ? 'bg-slate-900 text-white shadow' : 'text-slate-600'}">
+            Board Admin
+          </button>
+        </div>
+
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+          ${activeTab === 'leader' ? `
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Select HR Leader Name</label>
+              <select id="leaderSelect" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
+                ${db.leaders.map(l => `<option value="${l.id}">${l.name} [Username: ${l.user}]</option>`).join('')}
+              </select>
+            </div>
+          ` : `
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Board Administrator</label>
+              <input type="text" disabled value="Enactus Qena Board (Username: board)" class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-500" />
+            </div>
+          `}
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Password</label>
+            <input type="password" id="passwordInput" required placeholder="Enter password" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-slate-900" />
+          </div>
+
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow transition mt-2">
+            Sign In
+          </button>
+        </form>
+      `;
+    }
+
+    function switchTab(tab) {
